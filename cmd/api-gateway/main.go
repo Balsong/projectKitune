@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -23,29 +24,41 @@ var (
 func main() {
 	cfg := config.Load()
 
-	// Инициализация инфраструктуры
-	database, err := db.NewDB(nil, cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName)
+	// Инициализация базы данных
+	database, err := db.NewDB(cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName)
 	if err != nil {
 		log.Fatalf("❌ Ошибка инициализации БД: %v", err)
 	}
+	defer database.Close()
 
+	// Инициализация Kafka producer
 	kafkaProd, err := kafka.NewProducer(cfg.KafkaBrokers)
 	if err != nil {
 		log.Fatalf("❌ Ошибка инициализации Kafka: %v", err)
 	}
-
-	_ = database // пока используем для демонстрации
-	_ = kafkaProd
+	defer kafkaProd.Close()
 
 	// Маршруты
-	http.HandleFunc("GET /api/v1/menu", handleGetMenu)
-	http.HandleFunc("POST /api/v1/book", handleBookTable)
+	http.HandleFunc("/health", healthHandler)
+	http.HandleFunc("/api/v1/menu", handleGetMenu)
+	http.HandleFunc("/api/v1/book", handleBookTable(kafkaProd))
 
-	log.Printf("🍵 API Gateway запущен на http://localhost:%s", cfg.Port)
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
+	addr := fmt.Sprintf(":%s", cfg.Port)
+	log.Printf("🚀 API Gateway запущен на http://localhost%s", cfg.Port)
+	log.Fatal(http.ListenAndServe(addr, nil))
+}
+
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
 func handleGetMenu(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	mu.RLock()
 	defer mu.RUnlock()
 
@@ -53,24 +66,35 @@ func handleGetMenu(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(menu)
 }
 
-func handleBookTable(w http.ResponseWriter, r *http.Request) {
-	var req models.BookingRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"invalid json"}`, http.StatusBadRequest)
-		return
+func handleBookTable(producer *kafka.Producer) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var booking struct {
+			TableID  int    `json:"table_id"`
+			Customer string `json:"customer"`
+			Time     string `json:"time"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&booking); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		// Отправка в Kafka
+		err := producer.SendBooking(booking)
+		if err != nil {
+			http.Error(w, "Failed to process booking", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(map[string]string{
+			"status":  "booking_pending",
+			"message": "Your booking is being processed",
+		})
 	}
-
-	if req.Date == "" || req.Time == "" || req.Guests <= 0 {
-		http.Error(w, `{"error":"date, time and guests required"}`, http.StatusBadRequest)
-		return
-	}
-
-	log.Printf("📅 Бронирование: %s %s | %d гостей", req.Date, req.Time, req.Guests)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{
-		"status": "confirmed",
-		"msg":    "Запрос принят. Ожидайте подтверждения.",
-	})
 }
