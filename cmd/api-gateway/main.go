@@ -11,6 +11,7 @@ import (
 	"tea-platform/internal/db"
 	"tea-platform/internal/kafka"
 	"tea-platform/pkg/models"
+	"tea-platform/pkg/response"
 )
 
 var (
@@ -48,28 +49,26 @@ func main() {
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+func healthHandler(w http.ResponseWriter, _ *http.Request) {
+	response.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func handleGetMenu(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		response.Error(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
 	mu.RLock()
 	defer mu.RUnlock()
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(menu)
+	response.WriteJSON(w, http.StatusOK, menu)
 }
 
 func handleBookTable(producer *kafka.Producer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			response.Error(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 
@@ -80,19 +79,17 @@ func handleBookTable(producer *kafka.Producer) http.HandlerFunc {
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&booking); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			response.Error(w, http.StatusBadRequest, "Invalid request body")
 			return
 		}
 
 		// Отправка в Kafka
-		err := producer.SendBooking(booking)
-		if err != nil {
-			http.Error(w, "Failed to process booking", http.StatusInternalServerError)
+		if err := producer.SendBooking(booking); err != nil {
+			response.Error(w, http.StatusInternalServerError, "Failed to process booking")
 			return
 		}
 
-		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(map[string]string{
+		response.WriteJSON(w, http.StatusAccepted, map[string]string{
 			"status":  "booking_pending",
 			"message": "Your booking is being processed",
 		})

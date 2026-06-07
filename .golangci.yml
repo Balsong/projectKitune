@@ -1,0 +1,27 @@
+# Конфигурация golangci-lint (формат v2).
+# Базовый разумный набор — расширим по мере роста кодовой базы.
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck      # непроверенные ошибки
+    - govet         # подозрительные конструкции
+    - ineffassign   # бесполезные присваивания
+    - staticcheck   # глубокий статический анализ (включает gosimple/stylecheck)
+    - unused        # неиспользуемый код
+    - misspell      # опечатки в комментариях/строках
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling   # не требует проверки ошибок Close/Flush/Print и т.п.
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

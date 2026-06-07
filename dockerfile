@@ -1,8 +1,10 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+# go.su[m] — опциональный паттерн: подхватит go.sum, если он есть,
+# и не упадёт, пока внешних зависимостей (а значит и go.sum) ещё нет.
+COPY go.mod go.su[m] ./
 RUN go mod download
 
 COPY . .

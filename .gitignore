@@ -1,0 +1,21 @@
+# Бинарники сборки
+/bin/
+*.exe
+*.out
+
+# Локальные настройки Claude Code (не коммитим)
+.claude/settings.local.json
+
+# Окружение
+.env.local
+
+# macOS
+.DS_Store
+
+# Покрытие тестами
+coverage.out
+coverage.html
+
+# IDE
+.idea/
+.vscode/
