@@ -16,6 +16,7 @@ import (
 	"tea-platform/internal/config"
 	cartv1 "tea-platform/internal/genpb/cart/v1"
 	catalogv1 "tea-platform/internal/genpb/catalog/v1"
+	orderv1 "tea-platform/internal/genpb/order/v1"
 	"tea-platform/internal/kafka"
 	"tea-platform/pkg/events"
 	"tea-platform/pkg/response"
@@ -49,6 +50,18 @@ func main() {
 	defer func() { _ = cartConn.Close() }()
 	cartClient := cartv1.NewCartServiceClient(cartConn)
 
+	// gRPC-клиент к Order Service.
+	orderConn, err := grpc.NewClient(
+		cfg.OrderAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Error("не удалось создать gRPC-клиент Order", "error", err)
+		os.Exit(1)
+	}
+	defer func() { _ = orderConn.Close() }()
+	orderClient := orderv1.NewOrderServiceClient(orderConn)
+
 	// Kafka producer (бронь столов).
 	kafkaProd, err := kafka.NewProducer(cfg.KafkaBrokers)
 	if err != nil {
@@ -68,6 +81,10 @@ func main() {
 	mux.HandleFunc("DELETE /api/v1/cart/items", handleRemoveItem(log, cartClient))
 	mux.HandleFunc("POST /api/v1/cart/clear", handleClearCart(log, cartClient))
 	mux.HandleFunc("POST /api/v1/cart/merge", handleMergeCart(log, cartClient))
+
+	// Заказы.
+	mux.HandleFunc("POST /api/v1/orders", handleCreateOrder(log, orderClient))
+	mux.HandleFunc("GET /api/v1/orders/{id}", handleGetOrder(log, orderClient))
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

@@ -34,9 +34,15 @@ func (p *Producer) Publish(ctx context.Context, topic string, env events.Envelop
 	if err != nil {
 		return err
 	}
+	return p.PublishRaw(ctx, topic, env.AggregateID, value)
+}
+
+// PublishRaw отправляет уже сериализованное сообщение. Используется relay-воркером
+// outbox, который хранит готовый конверт в БД.
+func (p *Producer) PublishRaw(ctx context.Context, topic, key string, value []byte) error {
 	return p.writer.WriteMessages(ctx, kafka.Message{
 		Topic: topic,
-		Key:   []byte(env.AggregateID),
+		Key:   []byte(key),
 		Value: value,
 	})
 }

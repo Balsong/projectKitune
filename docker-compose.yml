@@ -111,6 +111,36 @@ services:
     networks:
       - tea-network
 
+  order-svc:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        SERVICE: order-svc
+    container_name: order-svc
+    environment:
+      GRPC_PORT: "9092"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: dev
+      DB_PASSWORD: dev
+      DB_NAME: tea_platform
+      KAFKA_BROKERS: kafka:9092
+      CART_ADDR: cart-svc:9091
+    ports:
+      # На хосте 9092 занят Kafka — публикуем order-svc на 9095.
+      - "9095:9092"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      cart-svc:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - tea-network
+
   api-gateway:
     build:
       context: .
@@ -122,6 +152,7 @@ services:
       APP_PORT: "8080"
       CATALOG_ADDR: catalog-svc:9090
       CART_ADDR: cart-svc:9091
+      ORDER_ADDR: order-svc:9092
       KAFKA_BROKERS: kafka:9092
     ports:
       - "8080:8080"
@@ -129,6 +160,8 @@ services:
       catalog-svc:
         condition: service_started
       cart-svc:
+        condition: service_started
+      order-svc:
         condition: service_started
       kafka:
         condition: service_healthy

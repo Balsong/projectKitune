@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package order.v1;
+
+option go_package = "tea-platform/internal/genpb/order/v1;orderv1";
+
+// OrderService — оркестратор оформления заказа. На Этапе 3b умеет создавать
+// заказ из корзины и эмитить order.created через transactional outbox.
+service OrderService {
+  // CreateOrder оформляет заказ из текущей корзины (checkout).
+  rpc CreateOrder(CreateOrderRequest) returns (Order);
+
+  // GetOrder возвращает заказ по идентификатору.
+  rpc GetOrder(GetOrderRequest) returns (Order);
+}
+
+// FulfillmentType — способ получения заказа.
+enum FulfillmentType {
+  FULFILLMENT_TYPE_UNSPECIFIED = 0;
+  FULFILLMENT_TYPE_SHOP_DELIVERY = 1; // доставка чая (магазин)
+  FULFILLMENT_TYPE_FOOD_COURIER = 2;  // доставка еды курьером
+  FULFILLMENT_TYPE_DINE_IN = 3;       // в ресторане (привязка к брони)
+}
+
+// OrderStatus — состояние заказа в state machine.
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_CREATED = 1;
+  ORDER_STATUS_PAYMENT_PENDING = 2;
+  ORDER_STATUS_PAID = 3;
+  ORDER_STATUS_CONFIRMED = 4;
+  ORDER_STATUS_COMPLETED = 5;
+  ORDER_STATUS_CANCELLED = 6;
+  ORDER_STATUS_PAYMENT_FAILED = 7;
+}
+
+message OrderItem {
+  string product_id = 1;
+  string name = 2;
+  int32 quantity = 3;
+  int64 unit_price_cents = 4;
+  int64 subtotal_cents = 5;
+}
+
+message Order {
+  string id = 1;
+  string user_id = 2;
+  string cart_id = 3;
+  FulfillmentType fulfillment_type = 4;
+  OrderStatus status = 5;
+  repeated OrderItem items = 6;
+  int64 total_cents = 7;
+  string currency = 8;
+  string address = 9;
+  string created_at = 10; // RFC3339
+}
+
+message CreateOrderRequest {
+  string cart_id = 1;
+  string user_id = 2;
+  FulfillmentType fulfillment_type = 3;
+  string address = 4;
+}
+
+message GetOrderRequest {
+  string id = 1;
+}

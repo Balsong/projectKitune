@@ -13,4 +13,7 @@ const (
 const (
 	// EventBookingRequested — пользователь запросил бронь стола.
 	EventBookingRequested = "booking.requested"
+
+	// EventOrderCreated — заказ создан (старт саги оформления).
+	EventOrderCreated = "order.created"
 )
