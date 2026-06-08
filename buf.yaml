@@ -4,6 +4,10 @@ modules:
 lint:
   use:
     - STANDARD
+  except:
+    # Осознанно переиспользуем Cart как ответ нескольких RPC корзины.
+    - RPC_RESPONSE_STANDARD_NAME
+    - RPC_REQUEST_RESPONSE_UNIQUE
 breaking:
   use:
     - FILE

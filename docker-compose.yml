@@ -80,6 +80,28 @@ services:
     networks:
       - tea-network
 
+  cart-svc:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        SERVICE: cart-svc
+    container_name: cart-svc
+    environment:
+      GRPC_PORT: "9091"
+      CATALOG_ADDR: catalog-svc:9090
+      REDIS_ADDR: redis:6379
+    ports:
+      - "9091:9091"
+    depends_on:
+      redis:
+        condition: service_healthy
+      catalog-svc:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - tea-network
+
   api-gateway:
     build:
       context: .
@@ -90,11 +112,14 @@ services:
     environment:
       APP_PORT: "8080"
       CATALOG_ADDR: catalog-svc:9090
+      CART_ADDR: cart-svc:9091
       KAFKA_BROKERS: kafka:9092
     ports:
       - "8080:8080"
     depends_on:
       catalog-svc:
+        condition: service_started
+      cart-svc:
         condition: service_started
       kafka:
         condition: service_started

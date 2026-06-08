@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package cart.v1;
+
+option go_package = "tea-platform/internal/genpb/cart/v1;cartv1";
+
+// CartService — корзина пользователя. Состояние эфемерное, живёт в Redis с TTL.
+// cart_id — это session_id для гостя или user_id для авторизованного клиента.
+// Позиции обогащаются данными из Catalog (название, цена, итог).
+service CartService {
+  // AddItem добавляет позицию (или увеличивает количество) и возвращает корзину.
+  rpc AddItem(AddItemRequest) returns (Cart);
+
+  // RemoveItem уменьшает количество; quantity <= 0 удаляет позицию целиком.
+  rpc RemoveItem(RemoveItemRequest) returns (Cart);
+
+  // GetCart возвращает текущее содержимое корзины.
+  rpc GetCart(GetCartRequest) returns (Cart);
+
+  // ClearCart полностью очищает корзину.
+  rpc ClearCart(ClearCartRequest) returns (Cart);
+
+  // MergeCart переносит позиции гостевой корзины в пользовательскую при логине.
+  rpc MergeCart(MergeCartRequest) returns (Cart);
+}
+
+// CartItem — строка корзины. Поля name/unit_price/subtotal заполняются из Catalog.
+message CartItem {
+  string product_id = 1;
+  int32 quantity = 2;
+  string name = 3;
+  int64 unit_price_cents = 4;
+  int64 subtotal_cents = 5; // quantity * unit_price_cents
+  bool available = 6;       // позиция всё ещё доступна в каталоге
+}
+
+message Cart {
+  string cart_id = 1;
+  repeated CartItem items = 2;
+  int64 total_cents = 3; // сумма доступных позиций
+  string currency = 4;
+}
+
+message AddItemRequest {
+  string cart_id = 1;
+  string product_id = 2;
+  int32 quantity = 3;
+}
+
+message RemoveItemRequest {
+  string cart_id = 1;
+  string product_id = 2;
+  int32 quantity = 3; // 0 или меньше — удалить позицию целиком
+}
+
+message GetCartRequest {
+  string cart_id = 1;
+}
+
+message ClearCartRequest {
+  string cart_id = 1;
+}
+
+message MergeCartRequest {
+  string source_cart_id = 1; // гостевая корзина
+  string target_cart_id = 2; // пользовательская корзина
+}

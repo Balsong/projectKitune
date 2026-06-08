@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"tea-platform/internal/config"
+	cartv1 "tea-platform/internal/genpb/cart/v1"
 	catalogv1 "tea-platform/internal/genpb/catalog/v1"
 	"tea-platform/internal/kafka"
 	"tea-platform/pkg/response"
@@ -35,6 +36,18 @@ func main() {
 	defer func() { _ = catalogConn.Close() }()
 	catalogClient := catalogv1.NewCatalogServiceClient(catalogConn)
 
+	// gRPC-клиент к Cart Service.
+	cartConn, err := grpc.NewClient(
+		cfg.CartAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Error("не удалось создать gRPC-клиент Cart", "error", err)
+		os.Exit(1)
+	}
+	defer func() { _ = cartConn.Close() }()
+	cartClient := cartv1.NewCartServiceClient(cartConn)
+
 	// Kafka producer (бронь столов).
 	kafkaProd, err := kafka.NewProducer(cfg.KafkaBrokers)
 	if err != nil {
@@ -47,6 +60,13 @@ func main() {
 	mux.HandleFunc("/health", healthHandler)
 	mux.HandleFunc("/api/v1/menu", handleGetMenu(log, catalogClient))
 	mux.HandleFunc("/api/v1/book", handleBookTable(log, kafkaProd))
+
+	// Корзина (метод-специфичные маршруты, Go 1.22+ ServeMux).
+	mux.HandleFunc("GET /api/v1/cart", handleGetCart(log, cartClient))
+	mux.HandleFunc("POST /api/v1/cart/items", handleAddItem(log, cartClient))
+	mux.HandleFunc("DELETE /api/v1/cart/items", handleRemoveItem(log, cartClient))
+	mux.HandleFunc("POST /api/v1/cart/clear", handleClearCart(log, cartClient))
+	mux.HandleFunc("POST /api/v1/cart/merge", handleMergeCart(log, cartClient))
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
