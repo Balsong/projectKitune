@@ -1,28 +1,33 @@
+// Package db предоставляет подключение к PostgreSQL (pgx) и применение миграций.
 package db
 
 import (
+	"context"
 	"fmt"
-	"log"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// DB — обёртка над пулом подключений к Postgres.
-// На следующем этапе сюда подключим *pgxpool.Pool.
-type DB struct {
-	// TODO(Этап 1): заменить заглушку на реальный *pgxpool.Pool
-}
+// NewPool создаёт пул соединений pgx и проверяет связь ping-ом.
+func NewPool(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
+	cfg, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		return nil, fmt.Errorf("db: разбор DSN: %w", err)
+	}
+	cfg.MaxConns = 10
+	cfg.MaxConnLifetime = time.Hour
 
-// NewDB подготавливает подключение к базе данных.
-// Пока соединение не открывается реально — это произойдёт на этапе
-// подключения pgx. Сигнатура согласована с вызовом в api-gateway.
-func NewDB(host, user, pass, dbname string) (*DB, error) {
-	connStr := fmt.Sprintf("postgresql://%s:%s@%s/%s", user, pass, host, dbname)
-	log.Printf("🔌 [DB] Подготовка подключения к: %s", connStr)
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("db: создание пула: %w", err)
+	}
 
-	return &DB{}, nil
-}
-
-// Close освобождает ресурсы пула подключений.
-func (d *DB) Close() error {
-	log.Printf("🔌 [DB] Закрытие подключения")
-	return nil
+	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	if err := pool.Ping(pingCtx); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("db: ping: %w", err)
+	}
+	return pool, nil
 }

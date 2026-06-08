@@ -1,15 +1,17 @@
-FROM golang:1.24-alpine AS builder
+# Универсальный multi-stage Dockerfile: какой сервис собирать — задаётся
+# build-аргументом SERVICE (имя каталога в ./cmd). По умолчанию api-gateway.
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-# go.su[m] — опциональный паттерн: подхватит go.sum, если он есть,
-# и не упадёт, пока внешних зависимостей (а значит и go.sum) ещё нет.
+# go.su[m] — опциональный паттерн: подхватит go.sum, если он есть.
 COPY go.mod go.su[m] ./
 RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/bin/api-gateway ./cmd/api-gateway
+ARG SERVICE=api-gateway
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/bin/service ./cmd/${SERVICE}
 
 FROM alpine:latest
 
@@ -17,8 +19,6 @@ RUN apk --no-cache add ca-certificates tzdata
 
 WORKDIR /root/
 
-COPY --from=builder /app/bin/api-gateway .
+COPY --from=builder /app/bin/service .
 
-EXPOSE 8080
-
-CMD ["./api-gateway"]
+CMD ["./service"]

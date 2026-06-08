@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package catalog.v1;
+
+option go_package = "tea-platform/internal/genpb/catalog/v1;catalogv1";
+
+// CatalogService — источник правды по товарам магазина (чай) и блюдам
+// ресторана. Read-heavy: данные агрессивно кэшируются на стороне сервиса.
+service CatalogService {
+  // ListProducts возвращает список товаров/блюд с опциональной фильтрацией.
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+
+  // GetProduct возвращает один товар/блюдо по идентификатору.
+  rpc GetProduct(GetProductRequest) returns (GetProductResponse);
+}
+
+// ProductKind различает домены платформы.
+enum ProductKind {
+  PRODUCT_KIND_UNSPECIFIED = 0;
+  PRODUCT_KIND_TEA_GOODS = 1; // товар магазина (чай, посуда)
+  PRODUCT_KIND_DISH = 2;      // блюдо ресторана
+}
+
+// Product — единая модель позиции каталога.
+message Product {
+  string id = 1;
+  ProductKind kind = 2;
+  string name = 3;
+  string description = 4;
+  string category = 5;       // напр. "shu_puer", "dim_sum", "dessert"
+  int64 price_cents = 6;     // цена в копейках
+  string currency = 7;       // ISO 4217, напр. "RUB"
+  bool available = 8;        // для блюд — отсутствие в стоп-листе
+  string image_url = 9;
+}
+
+message ListProductsRequest {
+  // Опциональный фильтр по типу позиции. UNSPECIFIED — все.
+  ProductKind kind = 1;
+  // Опциональный фильтр по категории. Пустая строка — все.
+  string category = 2;
+}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+}
+
+message GetProductRequest {
+  string id = 1;
+}
+
+message GetProductResponse {
+  Product product = 1;
+}

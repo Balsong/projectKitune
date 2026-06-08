@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GO_VERSION: "1.24"
+  GO_VERSION: "1.25"
 
 jobs:
   # ── Качество кода: форматирование, vet, статический анализ ──
@@ -86,18 +86,23 @@ jobs:
       - name: go build
         run: go build -v ./...
 
-  # ── Сборка Docker-образа api-gateway ──
+  # ── Сборка Docker-образов сервисов ──
   docker:
     name: Docker build
     runs-on: ubuntu-latest
     needs: [build]
+    strategy:
+      matrix:
+        service: [api-gateway, catalog-svc]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build api-gateway image
+      - name: Build ${{ matrix.service }} image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./dockerfile
+          build-args: |
+            SERVICE=${{ matrix.service }}
           push: false
-          tags: tea-platform/api-gateway:ci
+          tags: tea-platform/${{ matrix.service }}:ci
