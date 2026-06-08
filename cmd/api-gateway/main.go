@@ -17,6 +17,7 @@ import (
 	cartv1 "tea-platform/internal/genpb/cart/v1"
 	catalogv1 "tea-platform/internal/genpb/catalog/v1"
 	"tea-platform/internal/kafka"
+	"tea-platform/pkg/events"
 	"tea-platform/pkg/response"
 )
 
@@ -132,7 +133,15 @@ func handleGetMenu(log *slog.Logger, client catalogv1.CatalogServiceClient) http
 	}
 }
 
-// handleBookTable принимает бронь и публикует её в Kafka.
+// bookingRequestedPayload — полезная нагрузка события booking.requested.
+type bookingRequestedPayload struct {
+	BookingID string `json:"booking_id"`
+	TableID   int    `json:"table_id"`
+	Customer  string `json:"customer"`
+	Time      string `json:"time"`
+}
+
+// handleBookTable принимает бронь и публикует событие booking.requested в Kafka.
 func handleBookTable(log *slog.Logger, producer *kafka.Producer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -140,25 +149,41 @@ func handleBookTable(log *slog.Logger, producer *kafka.Producer) http.HandlerFun
 			return
 		}
 
-		var booking struct {
+		var body struct {
 			TableID  int    `json:"table_id"`
 			Customer string `json:"customer"`
 			Time     string `json:"time"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&booking); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			response.Error(w, http.StatusBadRequest, "Invalid request body")
 			return
 		}
 
-		if err := producer.SendBooking(booking); err != nil {
-			log.Error("не удалось отправить бронь в Kafka", "error", err)
+		bookingID := events.NewID()
+		env, err := events.New(events.EventBookingRequested, 1, bookingID, bookingRequestedPayload{
+			BookingID: bookingID,
+			TableID:   body.TableID,
+			Customer:  body.Customer,
+			Time:      body.Time,
+		})
+		if err != nil {
+			log.Error("не удалось собрать событие брони", "error", err)
+			response.Error(w, http.StatusInternalServerError, "Failed to process booking")
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+		if err := producer.Publish(ctx, events.TopicBookings, env); err != nil {
+			log.Error("не удалось опубликовать бронь в Kafka", "error", err)
 			response.Error(w, http.StatusInternalServerError, "Failed to process booking")
 			return
 		}
 
 		response.WriteJSON(w, http.StatusAccepted, map[string]string{
-			"status":  "booking_pending",
-			"message": "Your booking is being processed",
+			"status":     "booking_pending",
+			"booking_id": bookingID,
+			"message":    "Your booking is being processed",
 		})
 	}
 }
