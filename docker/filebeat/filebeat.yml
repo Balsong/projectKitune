@@ -1,0 +1,35 @@
+# Filebeat: собирает stdout-логи контейнеров платформы (json-file драйвер),
+# декодирует наш структурный JSON (slog) и шлёт в Elasticsearch. Logstash не
+# нужен — логи уже структурированы, парсить нечего.
+
+filebeat.inputs:
+  - type: container
+    paths:
+      - /var/lib/docker/containers/*/*.log
+
+processors:
+  - add_docker_metadata: ~
+  # Берём только контейнеры нашего проекта (compose: образы projectkitune-*).
+  - drop_event:
+      when:
+        not:
+          contains:
+            container.image.name: "projectkitune"
+  # Декодируем JSON приложения (поля time/level/msg/order_id/correlation_id…)
+  # под ключ json.* для удобного поиска в Kibana.
+  - decode_json_fields:
+      fields: ["message"]
+      target: "json"
+      overwrite_keys: true
+      add_error_key: true
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  index: "tea-logs-%{+yyyy.MM.dd}"
+
+# Кастомный индекс без ILM требует ручного шаблона.
+setup.ilm.enabled: false
+setup.template.name: "tea-logs"
+setup.template.pattern: "tea-logs-*"
+
+logging.level: warning
