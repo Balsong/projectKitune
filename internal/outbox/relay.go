@@ -17,16 +17,18 @@ type Relay struct {
 	repo      *Repo
 	publisher Publisher
 	log       *slog.Logger
+	source    string
 	interval  time.Duration
 	batchSize int
 }
 
-// NewRelay создаёт relay-воркер.
-func NewRelay(repo *Repo, publisher Publisher, log *slog.Logger) *Relay {
+// NewRelay создаёт relay-воркер, публикующий события одного источника source.
+func NewRelay(repo *Repo, publisher Publisher, log *slog.Logger, source string) *Relay {
 	return &Relay{
 		repo:      repo,
 		publisher: publisher,
 		log:       log,
+		source:    source,
 		interval:  time.Second,
 		batchSize: 100,
 	}
@@ -37,7 +39,7 @@ func (r *Relay) Run(ctx context.Context) {
 	ticker := time.NewTicker(r.interval)
 	defer ticker.Stop()
 
-	r.log.Info("outbox relay запущен", "interval", r.interval.String())
+	r.log.Info("outbox relay запущен", "source", r.source, "interval", r.interval.String())
 	for {
 		select {
 		case <-ctx.Done():
@@ -51,7 +53,7 @@ func (r *Relay) Run(ctx context.Context) {
 
 // drain публикует одну пачку неопубликованных событий.
 func (r *Relay) drain(ctx context.Context) {
-	msgs, err := r.repo.FetchUnpublished(ctx, r.batchSize)
+	msgs, err := r.repo.FetchUnpublished(ctx, r.source, r.batchSize)
 	if err != nil {
 		r.log.Error("relay: не удалось выбрать события", "error", err)
 		return

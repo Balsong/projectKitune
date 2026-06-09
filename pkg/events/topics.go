@@ -16,4 +16,9 @@ const (
 
 	// EventOrderCreated — заказ создан (старт саги оформления).
 	EventOrderCreated = "order.created"
+
+	// EventStockReserved — остатки успешно зарезервированы под заказ.
+	EventStockReserved = "stock.reserved"
+	// EventReservationFailed — не удалось зарезервировать (нет в наличии/стоп-лист).
+	EventReservationFailed = "reservation.failed"
 )

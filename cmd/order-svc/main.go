@@ -58,7 +58,7 @@ func main() {
 
 	// Outbox + relay-воркер (публикует order.created в Kafka).
 	outboxRepo := outbox.NewRepo(pool)
-	relay := outbox.NewRelay(outboxRepo, producer, log)
+	relay := outbox.NewRelay(outboxRepo, producer, log, outbox.SourceOrder)
 	go relay.Run(ctx)
 
 	// gRPC-клиент к Cart.

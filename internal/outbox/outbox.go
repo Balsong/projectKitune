@@ -14,6 +14,12 @@ import (
 	"tea-platform/pkg/events"
 )
 
+// Источники событий (колонка source). Каждый relay публикует только свои.
+const (
+	SourceOrder     = "order-svc"
+	SourceInventory = "inventory-svc"
+)
+
 // Repo — доступ к таблице outbox.
 type Repo struct {
 	pool *pgxpool.Pool
@@ -33,30 +39,46 @@ type Message struct {
 }
 
 // SaveTx записывает событие в outbox в рамках переданной транзакции.
-// Конверт сериализуется в JSON и хранится как payload.
-func SaveTx(ctx context.Context, tx pgx.Tx, topic string, env events.Envelope) error {
+// source — сервис-источник, по нему relay отбирает свои события.
+func SaveTx(ctx context.Context, tx pgx.Tx, source, topic string, env events.Envelope) error {
 	payload, err := json.Marshal(env)
 	if err != nil {
 		return fmt.Errorf("outbox: сериализация события: %w", err)
 	}
 	const q = `
-		INSERT INTO outbox (aggregate_id, topic, event_type, payload)
-		VALUES ($1, $2, $3, $4)`
-	if _, err := tx.Exec(ctx, q, env.AggregateID, topic, env.EventType, payload); err != nil {
+		INSERT INTO outbox (source, aggregate_id, topic, event_type, payload)
+		VALUES ($1, $2, $3, $4, $5)`
+	if _, err := tx.Exec(ctx, q, source, env.AggregateID, topic, env.EventType, payload); err != nil {
 		return fmt.Errorf("outbox: вставка события: %w", err)
 	}
 	return nil
 }
 
-// FetchUnpublished возвращает до limit неопубликованных событий по возрастанию id.
-func (r *Repo) FetchUnpublished(ctx context.Context, limit int) ([]Message, error) {
+// Save записывает событие в outbox в собственной транзакции. Используется,
+// когда нет бизнес-транзакции, к которой можно присоединиться (напр. событие
+// reservation.failed, при котором резерв откатывается).
+func (r *Repo) Save(ctx context.Context, source, topic string, env events.Envelope) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if err := SaveTx(ctx, tx, source, topic, env); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+// FetchUnpublished возвращает до limit неопубликованных событий источника
+// source по возрастанию id.
+func (r *Repo) FetchUnpublished(ctx context.Context, source string, limit int) ([]Message, error) {
 	const q = `
 		SELECT id, aggregate_id, topic, payload
 		FROM outbox
-		WHERE published_at IS NULL
+		WHERE published_at IS NULL AND source = $1
 		ORDER BY id
-		LIMIT $1`
-	rows, err := r.pool.Query(ctx, q, limit)
+		LIMIT $2`
+	rows, err := r.pool.Query(ctx, q, source, limit)
 	if err != nil {
 		return nil, fmt.Errorf("outbox: выборка неопубликованных: %w", err)
 	}

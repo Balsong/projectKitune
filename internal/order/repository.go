@@ -64,7 +64,7 @@ func (r *Repository) Create(ctx context.Context, o *Order) error {
 	if err != nil {
 		return fmt.Errorf("order: build event: %w", err)
 	}
-	if err := outbox.SaveTx(ctx, tx, events.TopicOrders, env); err != nil {
+	if err := outbox.SaveTx(ctx, tx, outbox.SourceOrder, events.TopicOrders, env); err != nil {
 		return err
 	}
 

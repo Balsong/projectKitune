@@ -169,6 +169,29 @@ services:
     networks:
       - tea-network
 
+  inventory-svc:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        SERVICE: inventory-svc
+    container_name: inventory-svc
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: dev
+      DB_PASSWORD: dev
+      DB_NAME: tea_platform
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - tea-network
+
   notification-svc:
     build:
       context: .

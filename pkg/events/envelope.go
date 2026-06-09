@@ -40,6 +40,18 @@ func New(eventType string, version int, aggregateID string, payload any) (Envelo
 	}, nil
 }
 
+// NewFollow собирает событие как следствие parent: переносит correlation_id
+// (сквозной id саги) и проставляет causation_id = parent.EventID.
+func NewFollow(eventType string, version int, aggregateID string, payload any, parent Envelope) (Envelope, error) {
+	env, err := New(eventType, version, aggregateID, payload)
+	if err != nil {
+		return Envelope{}, err
+	}
+	env.CorrelationID = parent.CorrelationID
+	env.CausationID = parent.EventID
+	return env, nil
+}
+
 // UnmarshalPayload разбирает полезную нагрузку конверта в target.
 func (e Envelope) UnmarshalPayload(target any) error {
 	return json.Unmarshal(e.Payload, target)

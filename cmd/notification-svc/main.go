@@ -22,6 +22,14 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	// Гарантируем существование топиков до запуска консьюмеров (иначе гонка
+	// с авто-созданием топика на стороне продюсера).
+	if err := kafka.EnsureTopics(ctx, cfg.KafkaBrokers,
+		events.TopicBookings, events.TopicOrders, events.TopicInventory); err != nil {
+		log.Error("не удалось создать топики", "error", err)
+		os.Exit(1)
+	}
+
 	// Каждый топик — отдельный консьюмер в своей горутине. Группа уникальна
 	// на топик: один group id на разные топики ломает распределение партиций.
 	subscriptions := []struct {
@@ -31,6 +39,7 @@ func main() {
 	}{
 		{events.TopicBookings, "notification-svc-bookings", handleBooking(log)},
 		{events.TopicOrders, "notification-svc-orders", handleOrder(log)},
+		{events.TopicInventory, "notification-svc-inventory", handleInventory(log)},
 	}
 
 	var wg sync.WaitGroup
@@ -95,6 +104,32 @@ func handleOrder(log *slog.Logger) kafka.HandlerFunc {
 			"currency", p.Currency,
 			"correlation_id", env.CorrelationID,
 		)
+		return nil
+	}
+}
+
+// handleInventory логирует результат резервирования остатков под заказ.
+func handleInventory(log *slog.Logger) kafka.HandlerFunc {
+	return func(_ context.Context, env events.Envelope) error {
+		var p struct {
+			OrderID          string   `json:"order_id"`
+			Reason           string   `json:"reason"`
+			UnavailableItems []string `json:"unavailable_items"`
+		}
+		if err := env.UnmarshalPayload(&p); err != nil {
+			return err
+		}
+		switch env.EventType {
+		case events.EventStockReserved:
+			log.Info("📨 уведомление: остатки зарезервированы",
+				"event_type", env.EventType, "order_id", p.OrderID,
+				"correlation_id", env.CorrelationID)
+		case events.EventReservationFailed:
+			log.Warn("📨 уведомление: резерв не удался",
+				"event_type", env.EventType, "order_id", p.OrderID,
+				"reason", p.Reason, "unavailable", p.UnavailableItems,
+				"correlation_id", env.CorrelationID)
+		}
 		return nil
 	}
 }
