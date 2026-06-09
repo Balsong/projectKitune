@@ -53,6 +53,7 @@ message Order {
   string currency = 8;
   string address = 9;
   string created_at = 10; // RFC3339
+  string booking_id = 11; // для dine_in — привязка к брони стола
 }
 
 message CreateOrderRequest {
@@ -60,6 +61,7 @@ message CreateOrderRequest {
   string user_id = 2;
   FulfillmentType fulfillment_type = 3;
   string address = 4;
+  string booking_id = 5; // опционально, для dine_in
 }
 
 message GetOrderRequest {

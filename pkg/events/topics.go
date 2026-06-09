@@ -7,6 +7,7 @@ const (
 	TopicPayments      = "payments.events"
 	TopicInventory     = "inventory.events"
 	TopicNotifications = "notifications.commands"
+	TopicDelivery      = "delivery.events"
 )
 
 // Типы событий.
@@ -31,4 +32,9 @@ const (
 	EventOrderConfirmed = "order.confirmed"
 	// EventOrderCancelled — заказ отменён (запуск компенсаций: release резерва).
 	EventOrderCancelled = "order.cancelled"
+
+	// EventDeliveryDispatched — доставка создана/отправлена (курьер/трек).
+	EventDeliveryDispatched = "delivery.dispatched"
+	// EventDeliveryDelivered — заказ доставлен (заказ переходит в completed).
+	EventDeliveryDelivered = "delivery.delivered"
 )

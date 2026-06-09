@@ -1,0 +1,2 @@
+ALTER TABLE orders DROP COLUMN IF EXISTS booking_id;
+DROP TABLE IF EXISTS deliveries;

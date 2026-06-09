@@ -68,6 +68,25 @@ func (o *Orchestrator) HandleInventoryEvent(ctx context.Context, env events.Enve
 	return nil
 }
 
+// HandleDeliveryEvent: delivery.delivered → completed (терминальный статус).
+func (o *Orchestrator) HandleDeliveryEvent(ctx context.Context, env events.Envelope) error {
+	if env.EventType != events.EventDeliveryDelivered {
+		return nil
+	}
+	var p orderRef
+	if err := env.UnmarshalPayload(&p); err != nil {
+		return err
+	}
+	applied, err := o.repo.Transition(ctx, p.OrderID, StatusConfirmed, StatusCompleted, nil)
+	if err != nil {
+		return err
+	}
+	if applied {
+		o.log.Info("заказ → completed (доставлен)", "order_id", p.OrderID)
+	}
+	return nil
+}
+
 // HandlePaymentEvent: payment.succeeded → confirmed (+ order.confirmed);
 // payment.failed → payment_failed (+ order.cancelled, запуск компенсации).
 func (o *Orchestrator) HandlePaymentEvent(ctx context.Context, env events.Envelope) error {

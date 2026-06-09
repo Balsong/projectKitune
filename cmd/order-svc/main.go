@@ -59,7 +59,7 @@ func main() {
 
 	// Топики саги: создаём до запуска консьюмеров/relay.
 	if err := kafka.EnsureTopics(ctx, cfg.KafkaBrokers,
-		events.TopicOrders, events.TopicInventory, events.TopicPayments); err != nil {
+		events.TopicOrders, events.TopicInventory, events.TopicPayments, events.TopicDelivery); err != nil {
 		log.Error("не удалось создать топики", "error", err)
 		os.Exit(1)
 	}
@@ -85,8 +85,10 @@ func main() {
 	orch := order.NewOrchestrator(repo, log)
 	invConsumer := kafka.NewConsumer(cfg.KafkaBrokers, events.TopicInventory, "order-svc-inventory", log)
 	payConsumer := kafka.NewConsumer(cfg.KafkaBrokers, events.TopicPayments, "order-svc-payments", log)
+	delConsumer := kafka.NewConsumer(cfg.KafkaBrokers, events.TopicDelivery, "order-svc-delivery", log)
 	defer func() { _ = invConsumer.Close() }()
 	defer func() { _ = payConsumer.Close() }()
+	defer func() { _ = delConsumer.Close() }()
 	go func() {
 		if err := invConsumer.Run(ctx, orch.HandleInventoryEvent); err != nil {
 			log.Error("консьюмер inventory остановлен", "error", err)
@@ -95,6 +97,11 @@ func main() {
 	go func() {
 		if err := payConsumer.Run(ctx, orch.HandlePaymentEvent); err != nil {
 			log.Error("консьюмер payments остановлен", "error", err)
+		}
+	}()
+	go func() {
+		if err := delConsumer.Run(ctx, orch.HandleDeliveryEvent); err != nil {
+			log.Error("консьюмер delivery остановлен", "error", err)
 		}
 	}()
 

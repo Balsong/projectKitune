@@ -227,6 +227,7 @@ type Order struct {
 	Currency        string                 `protobuf:"bytes,8,opt,name=currency,proto3" json:"currency,omitempty"`
 	Address         string                 `protobuf:"bytes,9,opt,name=address,proto3" json:"address,omitempty"`
 	CreatedAt       string                 `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"` // RFC3339
+	BookingId       string                 `protobuf:"bytes,11,opt,name=booking_id,json=bookingId,proto3" json:"booking_id,omitempty"` // для dine_in — привязка к брони стола
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -331,12 +332,20 @@ func (x *Order) GetCreatedAt() string {
 	return ""
 }
 
+func (x *Order) GetBookingId() string {
+	if x != nil {
+		return x.BookingId
+	}
+	return ""
+}
+
 type CreateOrderRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	CartId          string                 `protobuf:"bytes,1,opt,name=cart_id,json=cartId,proto3" json:"cart_id,omitempty"`
 	UserId          string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	FulfillmentType FulfillmentType        `protobuf:"varint,3,opt,name=fulfillment_type,json=fulfillmentType,proto3,enum=order.v1.FulfillmentType" json:"fulfillment_type,omitempty"`
 	Address         string                 `protobuf:"bytes,4,opt,name=address,proto3" json:"address,omitempty"`
+	BookingId       string                 `protobuf:"bytes,5,opt,name=booking_id,json=bookingId,proto3" json:"booking_id,omitempty"` // опционально, для dine_in
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -399,6 +408,13 @@ func (x *CreateOrderRequest) GetAddress() string {
 	return ""
 }
 
+func (x *CreateOrderRequest) GetBookingId() string {
+	if x != nil {
+		return x.BookingId
+	}
+	return ""
+}
+
 type GetOrderRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -454,7 +470,7 @@ const file_order_v1_order_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
 	"\bquantity\x18\x03 \x01(\x05R\bquantity\x12(\n" +
 	"\x10unit_price_cents\x18\x04 \x01(\x03R\x0eunitPriceCents\x12%\n" +
-	"\x0esubtotal_cents\x18\x05 \x01(\x03R\rsubtotalCents\"\xdf\x02\n" +
+	"\x0esubtotal_cents\x18\x05 \x01(\x03R\rsubtotalCents\"\xfe\x02\n" +
 	"\x05Order\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x17\n" +
@@ -468,12 +484,16 @@ const file_order_v1_order_proto_rawDesc = "" +
 	"\aaddress\x18\t \x01(\tR\aaddress\x12\x1d\n" +
 	"\n" +
 	"created_at\x18\n" +
-	" \x01(\tR\tcreatedAt\"\xa6\x01\n" +
+	" \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"booking_id\x18\v \x01(\tR\tbookingId\"\xc5\x01\n" +
 	"\x12CreateOrderRequest\x12\x17\n" +
 	"\acart_id\x18\x01 \x01(\tR\x06cartId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12D\n" +
 	"\x10fulfillment_type\x18\x03 \x01(\x0e2\x19.order.v1.FulfillmentTypeR\x0ffulfillmentType\x12\x18\n" +
-	"\aaddress\x18\x04 \x01(\tR\aaddress\"!\n" +
+	"\aaddress\x18\x04 \x01(\tR\aaddress\x12\x1d\n" +
+	"\n" +
+	"booking_id\x18\x05 \x01(\tR\tbookingId\"!\n" +
 	"\x0fGetOrderRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id*\x98\x01\n" +
 	"\x0fFulfillmentType\x12 \n" +

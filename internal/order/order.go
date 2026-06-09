@@ -50,6 +50,7 @@ type Order struct {
 	TotalCents      int64
 	Currency        string
 	Address         string
+	BookingID       string
 	CreatedAt       time.Time
 }
 
@@ -85,6 +86,7 @@ func (o *Order) toProto() *orderv1.Order {
 		TotalCents:      o.TotalCents,
 		Currency:        o.Currency,
 		Address:         o.Address,
+		BookingId:       o.BookingID,
 		CreatedAt:       o.CreatedAt.UTC().Format(time.RFC3339),
 	}
 }

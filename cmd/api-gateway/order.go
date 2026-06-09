@@ -35,6 +35,7 @@ type orderDTO struct {
 	TotalCents      int64          `json:"total_cents"`
 	Currency        string         `json:"currency"`
 	Address         string         `json:"address"`
+	BookingID       string         `json:"booking_id"`
 	CreatedAt       string         `json:"created_at"`
 }
 
@@ -58,6 +59,7 @@ func toOrderDTO(o *orderv1.Order) orderDTO {
 		TotalCents:      o.GetTotalCents(),
 		Currency:        o.GetCurrency(),
 		Address:         o.GetAddress(),
+		BookingID:       o.GetBookingId(),
 		CreatedAt:       o.GetCreatedAt(),
 	}
 }
@@ -69,6 +71,7 @@ func handleCreateOrder(log *slog.Logger, client orderv1.OrderServiceClient) http
 			FulfillmentType string `json:"fulfillment_type"`
 			Address         string `json:"address"`
 			UserID          string `json:"user_id"`
+			BookingID       string `json:"booking_id"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			response.Error(w, http.StatusBadRequest, "Invalid request body")
@@ -90,6 +93,7 @@ func handleCreateOrder(log *slog.Logger, client orderv1.OrderServiceClient) http
 			UserId:          body.UserID,
 			FulfillmentType: ft,
 			Address:         body.Address,
+			BookingId:       body.BookingID,
 		})
 		if err != nil {
 			writeGRPCError(w, log, "CreateOrder", err)

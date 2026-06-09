@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package delivery.v1;
+
+option go_package = "tea-platform/internal/genpb/delivery/v1;deliveryv1";
+
+// DeliveryService — доставка после подтверждения заказа. Событийный сервис
+// (реагирует на order.confirmed); gRPC отдаёт статус доставки клиентам.
+service DeliveryService {
+  rpc GetDelivery(GetDeliveryRequest) returns (Delivery);
+}
+
+enum DeliveryStatus {
+  DELIVERY_STATUS_UNSPECIFIED = 0;
+  DELIVERY_STATUS_CREATED = 1;    // создана, ждёт отправки
+  DELIVERY_STATUS_DISPATCHED = 2; // отправлена/курьер назначен
+  DELIVERY_STATUS_DELIVERED = 3;  // доставлена
+}
+
+message Delivery {
+  string order_id = 1;
+  string fulfillment_type = 2; // shop_delivery | food_courier | dine_in
+  DeliveryStatus status = 3;
+  string tracking_code = 4;     // для доставки чая (магазин)
+  string courier = 5;           // для доставки еды курьером
+  string eta = 6;               // ориентир времени доставки
+  string created_at = 7;        // RFC3339
+}
+
+message GetDeliveryRequest {
+  string order_id = 1;
+}

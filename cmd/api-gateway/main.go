@@ -16,6 +16,7 @@ import (
 	"tea-platform/internal/config"
 	cartv1 "tea-platform/internal/genpb/cart/v1"
 	catalogv1 "tea-platform/internal/genpb/catalog/v1"
+	deliveryv1 "tea-platform/internal/genpb/delivery/v1"
 	orderv1 "tea-platform/internal/genpb/order/v1"
 	"tea-platform/internal/kafka"
 	"tea-platform/pkg/events"
@@ -62,6 +63,18 @@ func main() {
 	defer func() { _ = orderConn.Close() }()
 	orderClient := orderv1.NewOrderServiceClient(orderConn)
 
+	// gRPC-клиент к Delivery Service.
+	deliveryConn, err := grpc.NewClient(
+		cfg.DeliveryAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Error("не удалось создать gRPC-клиент Delivery", "error", err)
+		os.Exit(1)
+	}
+	defer func() { _ = deliveryConn.Close() }()
+	deliveryClient := deliveryv1.NewDeliveryServiceClient(deliveryConn)
+
 	// Kafka producer (бронь столов).
 	kafkaProd, err := kafka.NewProducer(cfg.KafkaBrokers)
 	if err != nil {
@@ -85,6 +98,7 @@ func main() {
 	// Заказы.
 	mux.HandleFunc("POST /api/v1/orders", handleCreateOrder(log, orderClient))
 	mux.HandleFunc("GET /api/v1/orders/{id}", handleGetOrder(log, orderClient))
+	mux.HandleFunc("GET /api/v1/orders/{id}/delivery", handleGetDelivery(log, deliveryClient))
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

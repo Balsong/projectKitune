@@ -52,6 +52,19 @@ func NewFollow(eventType string, version int, aggregateID string, payload any, p
 	return env, nil
 }
 
+// NewWithCorrelation собирает событие с заданным correlation_id (когда нет
+// родительского конверта — например, фоновый воркер продолжает сагу).
+func NewWithCorrelation(eventType string, version int, aggregateID, correlationID string, payload any) (Envelope, error) {
+	env, err := New(eventType, version, aggregateID, payload)
+	if err != nil {
+		return Envelope{}, err
+	}
+	if correlationID != "" {
+		env.CorrelationID = correlationID
+	}
+	return env, nil
+}
+
 // UnmarshalPayload разбирает полезную нагрузку конверта в target.
 func (e Envelope) UnmarshalPayload(target any) error {
 	return json.Unmarshal(e.Payload, target)

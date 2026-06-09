@@ -19,6 +19,7 @@ const (
 	SourceOrder     = "order-svc"
 	SourceInventory = "inventory-svc"
 	SourcePayment   = "payment-svc"
+	SourceDelivery  = "delivery-svc"
 )
 
 // Repo — доступ к таблице outbox.

@@ -32,11 +32,11 @@ func (r *Repository) Create(ctx context.Context, o *Order) error {
 	defer func() { _ = tx.Rollback(ctx) }() // no-op после Commit
 
 	const insertOrder = `
-		INSERT INTO orders (user_id, cart_id, fulfillment_type, status, total_cents, currency, address)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO orders (user_id, cart_id, fulfillment_type, status, total_cents, currency, address, booking_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id, created_at`
 	if err := tx.QueryRow(ctx, insertOrder,
-		o.UserID, o.CartID, o.FulfillmentType, o.Status, o.TotalCents, o.Currency, o.Address,
+		o.UserID, o.CartID, o.FulfillmentType, o.Status, o.TotalCents, o.Currency, o.Address, o.BookingID,
 	).Scan(&o.ID, &o.CreatedAt); err != nil {
 		return fmt.Errorf("order: insert order: %w", err)
 	}
@@ -119,13 +119,13 @@ func (r *Repository) Transition(ctx context.Context, orderID, from, to string, e
 // Get возвращает заказ с позициями или ErrNotFound.
 func (r *Repository) Get(ctx context.Context, id string) (*Order, error) {
 	const selectOrder = `
-		SELECT id, user_id, cart_id, fulfillment_type, status, total_cents, currency, address, created_at
+		SELECT id, user_id, cart_id, fulfillment_type, status, total_cents, currency, address, booking_id, created_at
 		FROM orders WHERE id = $1`
 
 	var o Order
 	err := r.pool.QueryRow(ctx, selectOrder, id).Scan(
 		&o.ID, &o.UserID, &o.CartID, &o.FulfillmentType, &o.Status,
-		&o.TotalCents, &o.Currency, &o.Address, &o.CreatedAt,
+		&o.TotalCents, &o.Currency, &o.Address, &o.BookingID, &o.CreatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound

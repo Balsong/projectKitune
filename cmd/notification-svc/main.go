@@ -25,7 +25,7 @@ func main() {
 	// Гарантируем существование топиков до запуска консьюмеров (иначе гонка
 	// с авто-созданием топика на стороне продюсера).
 	if err := kafka.EnsureTopics(ctx, cfg.KafkaBrokers,
-		events.TopicBookings, events.TopicOrders, events.TopicInventory, events.TopicPayments); err != nil {
+		events.TopicBookings, events.TopicOrders, events.TopicInventory, events.TopicPayments, events.TopicDelivery); err != nil {
 		log.Error("не удалось создать топики", "error", err)
 		os.Exit(1)
 	}
@@ -41,6 +41,7 @@ func main() {
 		{events.TopicOrders, "notification-svc-orders", handleOrder(log)},
 		{events.TopicInventory, "notification-svc-inventory", handleInventory(log)},
 		{events.TopicPayments, "notification-svc-payments", handlePayment(log)},
+		{events.TopicDelivery, "notification-svc-delivery", handleDelivery(log)},
 	}
 
 	var wg sync.WaitGroup
@@ -109,6 +110,31 @@ func handleOrder(log *slog.Logger) kafka.HandlerFunc {
 		case events.EventOrderCancelled:
 			log.Warn("📨 уведомление: заказ отменён ❌",
 				"order_id", p.OrderID, "reason", p.Reason, "correlation_id", env.CorrelationID)
+		}
+		return nil
+	}
+}
+
+// handleDelivery уведомляет о ходе доставки.
+func handleDelivery(log *slog.Logger) kafka.HandlerFunc {
+	return func(_ context.Context, env events.Envelope) error {
+		var p struct {
+			OrderID      string `json:"order_id"`
+			TrackingCode string `json:"tracking_code"`
+			Courier      string `json:"courier"`
+			ETA          string `json:"eta"`
+		}
+		if err := env.UnmarshalPayload(&p); err != nil {
+			return err
+		}
+		switch env.EventType {
+		case events.EventDeliveryDispatched:
+			log.Info("📨 уведомление: заказ отправлен 🚚",
+				"order_id", p.OrderID, "tracking", p.TrackingCode,
+				"courier", p.Courier, "eta", p.ETA, "correlation_id", env.CorrelationID)
+		case events.EventDeliveryDelivered:
+			log.Info("📨 уведомление: заказ доставлен 📦",
+				"order_id", p.OrderID, "correlation_id", env.CorrelationID)
 		}
 		return nil
 	}

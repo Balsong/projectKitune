@@ -50,6 +50,7 @@ func (s *Service) CreateOrder(ctx context.Context, req *orderv1.CreateOrderReque
 		Status:          StatusCreated,
 		Currency:        cartResp.GetCurrency(),
 		Address:         req.GetAddress(),
+		BookingID:       req.GetBookingId(),
 	}
 
 	var total int64
