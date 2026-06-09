@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: tea-services
+    static_configs:
+      - targets:
+          - api-gateway:2112
+          - catalog-svc:2112
+          - cart-svc:2112
+          - order-svc:2112
+          - inventory-svc:2112
+          - payment-svc:2112
+          - delivery-svc:2112
+          - notification-svc:2112
