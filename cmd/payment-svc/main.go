@@ -1,6 +1,5 @@
-// Command inventory-svc — событийный сервис инвентаря. Слушает orders.events,
-// резервирует остатки под order.created и эмитит stock.reserved /
-// reservation.failed через transactional outbox (relay-воркер).
+// Command payment-svc — mock платёжного провайдера. Слушает inventory.events
+// (stock.reserved), инициирует оплату и эмитит payment.succeeded/failed.
 package main
 
 import (
@@ -10,11 +9,15 @@ import (
 	"os/signal"
 	"syscall"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"tea-platform/internal/config"
 	"tea-platform/internal/db"
-	"tea-platform/internal/inventory"
+	orderv1 "tea-platform/internal/genpb/order/v1"
 	"tea-platform/internal/kafka"
 	"tea-platform/internal/outbox"
+	"tea-platform/internal/payment"
 	"tea-platform/migrations"
 	"tea-platform/pkg/events"
 )
@@ -26,7 +29,6 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	// PostgreSQL + миграции.
 	pool, err := db.NewPool(ctx, cfg.DSN())
 	if err != nil {
 		log.Error("не удалось подключиться к БД", "error", err)
@@ -38,7 +40,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Kafka-продюсер + outbox relay (публикует inventory.events).
 	producer, err := kafka.NewProducer(cfg.KafkaBrokers)
 	if err != nil {
 		log.Error("не удалось инициализировать Kafka", "error", err)
@@ -46,23 +47,30 @@ func main() {
 	}
 	defer func() { _ = producer.Close() }()
 
-	// Гарантируем существование топиков до запуска консьюмера/relay.
-	if err := kafka.EnsureTopics(ctx, cfg.KafkaBrokers, events.TopicOrders, events.TopicInventory); err != nil {
+	if err := kafka.EnsureTopics(ctx, cfg.KafkaBrokers, events.TopicInventory, events.TopicPayments); err != nil {
 		log.Error("не удалось создать топики", "error", err)
 		os.Exit(1)
 	}
 
 	outboxRepo := outbox.NewRepo(pool)
-	relay := outbox.NewRelay(outboxRepo, producer, log, outbox.SourceInventory)
+	relay := outbox.NewRelay(outboxRepo, producer, log, outbox.SourcePayment)
 	go relay.Run(ctx)
 
-	// Консьюмер orders.events → резервирование.
-	svc := inventory.NewService(pool, outboxRepo, log)
-	consumer := kafka.NewConsumer(cfg.KafkaBrokers, events.TopicOrders, "inventory-svc", log)
+	// gRPC-клиент к Order (за суммой заказа).
+	orderConn, err := grpc.NewClient(cfg.OrderAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Error("не удалось создать gRPC-клиент Order", "error", err)
+		os.Exit(1)
+	}
+	defer func() { _ = orderConn.Close() }()
+	orderClient := orderv1.NewOrderServiceClient(orderConn)
+
+	svc := payment.NewService(pool, outboxRepo, orderClient, cfg.PaymentLimitCents, log)
+	consumer := kafka.NewConsumer(cfg.KafkaBrokers, events.TopicInventory, "payment-svc", log)
 	defer func() { _ = consumer.Close() }()
 
-	log.Info("inventory-svc запущен", "topic", events.TopicOrders)
-	if err := consumer.Run(ctx, svc.HandleOrderEvent); err != nil {
+	log.Info("payment-svc запущен", "topic", events.TopicInventory, "limit_cents", cfg.PaymentLimitCents)
+	if err := consumer.Run(ctx, svc.HandleStockReserved); err != nil {
 		log.Error("консьюмер остановлен с ошибкой", "error", err)
 		os.Exit(1)
 	}

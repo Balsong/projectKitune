@@ -21,4 +21,14 @@ const (
 	EventStockReserved = "stock.reserved"
 	// EventReservationFailed — не удалось зарезервировать (нет в наличии/стоп-лист).
 	EventReservationFailed = "reservation.failed"
+
+	// EventPaymentSucceeded — оплата заказа прошла.
+	EventPaymentSucceeded = "payment.succeeded"
+	// EventPaymentFailed — оплата заказа не прошла.
+	EventPaymentFailed = "payment.failed"
+
+	// EventOrderConfirmed — заказ подтверждён (оплачен, резерв коммитится).
+	EventOrderConfirmed = "order.confirmed"
+	// EventOrderCancelled — заказ отменён (запуск компенсаций: release резерва).
+	EventOrderCancelled = "order.cancelled"
 )

@@ -74,6 +74,48 @@ func (r *Repository) Create(ctx context.Context, o *Order) error {
 	return nil
 }
 
+// EmitSpec описывает событие, публикуемое в outbox в одной транзакции с
+// переходом состояния заказа.
+type EmitSpec struct {
+	Source string
+	Topic  string
+	Env    events.Envelope
+}
+
+// Transition атомарно переводит заказ из статуса from в to (только если
+// текущий статус = from) и, если задан emit, пишет событие в outbox в той же
+// транзакции. applied=false означает, что статус не совпал — переход уже
+// выполнен ранее или пришёл не вовремя (идемпотентность саги).
+func (r *Repository) Transition(ctx context.Context, orderID, from, to string, emit *EmitSpec) (bool, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return false, fmt.Errorf("order: begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	ct, err := tx.Exec(ctx,
+		`UPDATE orders SET status = $2, updated_at = now() WHERE id = $1 AND status = $3`,
+		orderID, to, from,
+	)
+	if err != nil {
+		return false, fmt.Errorf("order: update status: %w", err)
+	}
+	if ct.RowsAffected() == 0 {
+		return false, nil // статус не совпал — пропускаем
+	}
+
+	if emit != nil {
+		if err := outbox.SaveTx(ctx, tx, emit.Source, emit.Topic, emit.Env); err != nil {
+			return false, err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return false, fmt.Errorf("order: commit: %w", err)
+	}
+	return true, nil
+}
+
 // Get возвращает заказ с позициями или ErrNotFound.
 func (r *Repository) Get(ctx context.Context, id string) (*Order, error) {
 	const selectOrder = `

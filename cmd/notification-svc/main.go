@@ -25,7 +25,7 @@ func main() {
 	// Гарантируем существование топиков до запуска консьюмеров (иначе гонка
 	// с авто-созданием топика на стороне продюсера).
 	if err := kafka.EnsureTopics(ctx, cfg.KafkaBrokers,
-		events.TopicBookings, events.TopicOrders, events.TopicInventory); err != nil {
+		events.TopicBookings, events.TopicOrders, events.TopicInventory, events.TopicPayments); err != nil {
 		log.Error("не удалось создать топики", "error", err)
 		os.Exit(1)
 	}
@@ -40,6 +40,7 @@ func main() {
 		{events.TopicBookings, "notification-svc-bookings", handleBooking(log)},
 		{events.TopicOrders, "notification-svc-orders", handleOrder(log)},
 		{events.TopicInventory, "notification-svc-inventory", handleInventory(log)},
+		{events.TopicPayments, "notification-svc-payments", handlePayment(log)},
 	}
 
 	var wg sync.WaitGroup
@@ -84,7 +85,7 @@ func handleBooking(log *slog.Logger) kafka.HandlerFunc {
 	}
 }
 
-// handleOrder «отправляет» уведомление о созданном заказе.
+// handleOrder уведомляет о жизненном цикле заказа: создан / подтверждён / отменён.
 func handleOrder(log *slog.Logger) kafka.HandlerFunc {
 	return func(_ context.Context, env events.Envelope) error {
 		var p struct {
@@ -92,18 +93,48 @@ func handleOrder(log *slog.Logger) kafka.HandlerFunc {
 			FulfillmentType string `json:"fulfillment_type"`
 			TotalCents      int64  `json:"total_cents"`
 			Currency        string `json:"currency"`
+			Reason          string `json:"reason"`
 		}
 		if err := env.UnmarshalPayload(&p); err != nil {
 			return err
 		}
-		log.Info("📨 уведомление: заказ принят",
-			"event_type", env.EventType,
-			"order_id", p.OrderID,
-			"fulfillment", p.FulfillmentType,
-			"total_cents", p.TotalCents,
-			"currency", p.Currency,
-			"correlation_id", env.CorrelationID,
-		)
+		switch env.EventType {
+		case events.EventOrderCreated:
+			log.Info("📨 уведомление: заказ принят",
+				"order_id", p.OrderID, "fulfillment", p.FulfillmentType,
+				"total_cents", p.TotalCents, "correlation_id", env.CorrelationID)
+		case events.EventOrderConfirmed:
+			log.Info("📨 уведомление: заказ подтверждён ✅",
+				"order_id", p.OrderID, "correlation_id", env.CorrelationID)
+		case events.EventOrderCancelled:
+			log.Warn("📨 уведомление: заказ отменён ❌",
+				"order_id", p.OrderID, "reason", p.Reason, "correlation_id", env.CorrelationID)
+		}
+		return nil
+	}
+}
+
+// handlePayment уведомляет о результате оплаты.
+func handlePayment(log *slog.Logger) kafka.HandlerFunc {
+	return func(_ context.Context, env events.Envelope) error {
+		var p struct {
+			OrderID     string `json:"order_id"`
+			AmountCents int64  `json:"amount_cents"`
+			Reason      string `json:"reason"`
+		}
+		if err := env.UnmarshalPayload(&p); err != nil {
+			return err
+		}
+		switch env.EventType {
+		case events.EventPaymentSucceeded:
+			log.Info("📨 уведомление: оплата прошла 💳",
+				"order_id", p.OrderID, "amount_cents", p.AmountCents,
+				"correlation_id", env.CorrelationID)
+		case events.EventPaymentFailed:
+			log.Warn("📨 уведомление: оплата отклонена 💳",
+				"order_id", p.OrderID, "amount_cents", p.AmountCents,
+				"reason", p.Reason, "correlation_id", env.CorrelationID)
+		}
 		return nil
 	}
 }

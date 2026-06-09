@@ -192,6 +192,33 @@ services:
     networks:
       - tea-network
 
+  payment-svc:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        SERVICE: payment-svc
+    container_name: payment-svc
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: dev
+      DB_PASSWORD: dev
+      DB_NAME: tea_platform
+      KAFKA_BROKERS: kafka:9092
+      ORDER_ADDR: order-svc:9092
+      PAYMENT_LIMIT_CENTS: "1000000" # 10 000 ₽ — заказы дороже отклоняются (демо компенсации)
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      order-svc:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - tea-network
+
   notification-svc:
     build:
       context: .

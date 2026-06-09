@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 // Config — конфигурация сервисов платформы, загружаемая из переменных
@@ -20,6 +21,10 @@ type Config struct {
 	DBName       string
 	KafkaBrokers string
 	RedisAddr    string
+
+	// PaymentLimitCents — порог mock-оплаты: заказы дороже отклоняются
+	// («превышен лимит карты»). Позволяет демонстрировать компенсацию саги.
+	PaymentLimitCents int64
 }
 
 // Load читает конфигурацию из окружения с разумными дефолтами.
@@ -37,7 +42,18 @@ func Load() *Config {
 		DBName:       getEnv("DB_NAME", "tea_platform"),
 		KafkaBrokers: getEnv("KAFKA_BROKERS", "kafka:9092"),
 		RedisAddr:    getEnv("REDIS_ADDR", "redis:6379"),
+
+		PaymentLimitCents: getEnvInt64("PAYMENT_LIMIT_CENTS", 1_000_000), // 10 000 ₽
 	}
+}
+
+func getEnvInt64(key string, fallback int64) int64 {
+	if value, ok := os.LookupEnv(key); ok {
+		if n, err := strconv.ParseInt(value, 10, 64); err == nil {
+			return n
+		}
+	}
+	return fallback
 }
 
 // DSN формирует строку подключения к PostgreSQL для pgx.

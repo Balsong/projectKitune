@@ -26,6 +26,7 @@ import (
 	"tea-platform/internal/order"
 	"tea-platform/internal/outbox"
 	"tea-platform/migrations"
+	"tea-platform/pkg/events"
 )
 
 func main() {
@@ -56,7 +57,14 @@ func main() {
 	}
 	defer func() { _ = producer.Close() }()
 
-	// Outbox + relay-воркер (публикует order.created в Kafka).
+	// Топики саги: создаём до запуска консьюмеров/relay.
+	if err := kafka.EnsureTopics(ctx, cfg.KafkaBrokers,
+		events.TopicOrders, events.TopicInventory, events.TopicPayments); err != nil {
+		log.Error("не удалось создать топики", "error", err)
+		os.Exit(1)
+	}
+
+	// Outbox + relay-воркер (публикует события заказа в Kafka).
 	outboxRepo := outbox.NewRepo(pool)
 	relay := outbox.NewRelay(outboxRepo, producer, log, outbox.SourceOrder)
 	go relay.Run(ctx)
@@ -70,8 +78,28 @@ func main() {
 	defer func() { _ = cartConn.Close() }()
 	cartClient := cartv1.NewCartServiceClient(cartConn)
 
+	repo := order.NewRepository(pool)
+
+	// Дирижёр саги: слушает inventory.events и payments.events, продвигает
+	// state machine заказа и эмитит order.confirmed / order.cancelled.
+	orch := order.NewOrchestrator(repo, log)
+	invConsumer := kafka.NewConsumer(cfg.KafkaBrokers, events.TopicInventory, "order-svc-inventory", log)
+	payConsumer := kafka.NewConsumer(cfg.KafkaBrokers, events.TopicPayments, "order-svc-payments", log)
+	defer func() { _ = invConsumer.Close() }()
+	defer func() { _ = payConsumer.Close() }()
+	go func() {
+		if err := invConsumer.Run(ctx, orch.HandleInventoryEvent); err != nil {
+			log.Error("консьюмер inventory остановлен", "error", err)
+		}
+	}()
+	go func() {
+		if err := payConsumer.Run(ctx, orch.HandlePaymentEvent); err != nil {
+			log.Error("консьюмер payments остановлен", "error", err)
+		}
+	}()
+
 	// gRPC-сервер заказов.
-	svc := order.NewService(order.NewRepository(pool), cartClient, log)
+	svc := order.NewService(repo, cartClient, log)
 	grpcServer := grpc.NewServer()
 	orderv1.RegisterOrderServiceServer(grpcServer, svc)
 

@@ -93,7 +93,7 @@ jobs:
     needs: [build]
     strategy:
       matrix:
-        service: [api-gateway, catalog-svc, cart-svc, order-svc, inventory-svc, notification-svc]
+        service: [api-gateway, catalog-svc, cart-svc, order-svc, inventory-svc, payment-svc, notification-svc]
     steps:
       - uses: actions/checkout@v4
 

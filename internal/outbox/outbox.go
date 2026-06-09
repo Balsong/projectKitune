@@ -18,6 +18,7 @@ import (
 const (
 	SourceOrder     = "order-svc"
 	SourceInventory = "inventory-svc"
+	SourcePayment   = "payment-svc"
 )
 
 // Repo — доступ к таблице outbox.

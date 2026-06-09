@@ -51,14 +51,60 @@ type reservationFailedPayload struct {
 	UnavailableItems []string `json:"unavailable_items"`
 }
 
-// HandleOrderCreated резервирует остатки под заказ. Успех (stock.reserved)
-// пишется в одной транзакции с резервами; отказ (reservation.failed) — отдельно,
-// так как резерв откатывается. correlation_id протягивается из order.created.
-func (s *Service) HandleOrderCreated(ctx context.Context, env events.Envelope) error {
-	if env.EventType != events.EventOrderCreated {
-		return nil // чужой тип события в топике — пропускаем
+// HandleOrderEvent диспетчеризует события заказа: created → резерв,
+// confirmed → commit резерва, cancelled → release (компенсация).
+func (s *Service) HandleOrderEvent(ctx context.Context, env events.Envelope) error {
+	switch env.EventType {
+	case events.EventOrderCreated:
+		return s.reserve(ctx, env)
+	case events.EventOrderConfirmed:
+		return s.commit(ctx, env)
+	case events.EventOrderCancelled:
+		return s.release(ctx, env)
 	}
+	return nil
+}
 
+// commit фиксирует резервы оплаченного заказа.
+func (s *Service) commit(ctx context.Context, env events.Envelope) error {
+	var p struct {
+		OrderID string `json:"order_id"`
+	}
+	if err := env.UnmarshalPayload(&p); err != nil {
+		return err
+	}
+	n, err := s.repo.Commit(ctx, p.OrderID)
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		s.log.Info("резерв подтверждён (committed)", "order_id", p.OrderID, "items", n)
+	}
+	return nil
+}
+
+// release освобождает резервы отменённого заказа (компенсация саги).
+func (s *Service) release(ctx context.Context, env events.Envelope) error {
+	var p struct {
+		OrderID string `json:"order_id"`
+	}
+	if err := env.UnmarshalPayload(&p); err != nil {
+		return err
+	}
+	n, err := s.repo.Release(ctx, p.OrderID)
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		s.log.Info("резерв освобождён (released)", "order_id", p.OrderID, "items", n)
+	}
+	return nil
+}
+
+// reserve резервирует остатки под заказ. Успех (stock.reserved) пишется в одной
+// транзакции с резервами; отказ (reservation.failed) — отдельно, так как резерв
+// откатывается. correlation_id протягивается из order.created.
+func (s *Service) reserve(ctx context.Context, env events.Envelope) error {
 	var p orderCreatedPayload
 	if err := env.UnmarshalPayload(&p); err != nil {
 		return err
