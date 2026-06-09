@@ -10,6 +10,7 @@ import (
 // окружения. Один тип на все сервисы; конкретный сервис использует нужные поля.
 type Config struct {
 	Port         string // HTTP-порт (api-gateway)
+	MetricsPort  string // порт HTTP /metrics (все сервисы)
 	GRPCPort     string // порт gRPC-сервера (catalog-svc и др.)
 	CatalogAddr  string // адрес gRPC Catalog для клиентов (api-gateway, cart-svc)
 	CartAddr     string // адрес gRPC Cart для клиентов (api-gateway, order-svc)
@@ -32,6 +33,7 @@ type Config struct {
 func Load() *Config {
 	return &Config{
 		Port:         getEnv("APP_PORT", "8080"),
+		MetricsPort:  getEnv("METRICS_PORT", "2112"),
 		GRPCPort:     getEnv("GRPC_PORT", "9090"),
 		CatalogAddr:  getEnv("CATALOG_ADDR", "catalog-svc:9090"),
 		CartAddr:     getEnv("CART_ADDR", "cart-svc:9091"),

@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"tea-platform/internal/metrics"
 	"tea-platform/internal/outbox"
 	"tea-platform/pkg/events"
 )
@@ -96,6 +97,7 @@ func (s *Service) release(ctx context.Context, env events.Envelope) error {
 		return err
 	}
 	if n > 0 {
+		metrics.Compensations.Inc()
 		s.log.Info("резерв освобождён (released)", "order_id", p.OrderID, "items", n)
 	}
 	return nil
@@ -156,6 +158,7 @@ func (s *Service) reserve(ctx context.Context, env events.Envelope) error {
 		if err := s.outbox.Save(ctx, outbox.SourceInventory, events.TopicInventory, failEnv); err != nil {
 			return err
 		}
+		metrics.ReservationsTotal.WithLabelValues("failed").Inc()
 		s.log.Info("резерв не удался", "order_id", p.OrderID, "unavailable", failed)
 		return nil
 	}
@@ -174,6 +177,7 @@ func (s *Service) reserve(ctx context.Context, env events.Envelope) error {
 	}
 	committed = true
 
+	metrics.ReservationsTotal.WithLabelValues("reserved").Inc()
 	s.log.Info("остатки зарезервированы", "order_id", p.OrderID, "items", len(reserved))
 	return nil
 }

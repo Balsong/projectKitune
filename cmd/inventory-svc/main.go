@@ -14,6 +14,7 @@ import (
 	"tea-platform/internal/db"
 	"tea-platform/internal/inventory"
 	"tea-platform/internal/kafka"
+	"tea-platform/internal/metrics"
 	"tea-platform/internal/outbox"
 	"tea-platform/migrations"
 	"tea-platform/pkg/events"
@@ -22,6 +23,8 @@ import (
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	cfg := config.Load()
+
+	go metrics.Serve(":"+cfg.MetricsPort, log)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

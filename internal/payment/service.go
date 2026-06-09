@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	orderv1 "tea-platform/internal/genpb/order/v1"
+	"tea-platform/internal/metrics"
 	"tea-platform/internal/outbox"
 	"tea-platform/pkg/events"
 )
@@ -117,6 +118,7 @@ func (s *Service) HandleStockReserved(ctx context.Context, env events.Envelope) 
 		return err
 	}
 
+	metrics.PaymentsTotal.WithLabelValues(status).Inc()
 	s.log.Info("оплата обработана",
 		"order_id", p.OrderID, "amount_cents", amount, "status", status)
 	return nil

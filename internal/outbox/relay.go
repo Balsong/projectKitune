@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"time"
+
+	"tea-platform/internal/metrics"
 )
 
 // Publisher публикует сырое сообщение в топик (реализуется kafka.Producer).
@@ -70,5 +72,6 @@ func (r *Relay) drain(ctx context.Context) {
 			r.log.Error("relay: не удалось пометить событие отправленным", "id", m.ID, "error", err)
 			return
 		}
+		metrics.OutboxPublished.WithLabelValues(r.source).Inc()
 	}
 }

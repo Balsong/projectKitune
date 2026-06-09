@@ -12,12 +12,15 @@ import (
 
 	"tea-platform/internal/config"
 	"tea-platform/internal/kafka"
+	"tea-platform/internal/metrics"
 	"tea-platform/pkg/events"
 )
 
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	cfg := config.Load()
+
+	go metrics.Serve(":"+cfg.MetricsPort, log)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

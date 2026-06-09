@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"tea-platform/internal/metrics"
 	"tea-platform/internal/outbox"
 	"tea-platform/pkg/events"
 )
@@ -46,6 +47,7 @@ func (o *Orchestrator) HandleInventoryEvent(ctx context.Context, env events.Enve
 		}
 		if applied {
 			o.log.Info("заказ → payment_pending", "order_id", p.OrderID)
+			metrics.OrderStatus.WithLabelValues(StatusPaymentPending).Inc()
 		}
 		return nil
 
@@ -62,6 +64,7 @@ func (o *Orchestrator) HandleInventoryEvent(ctx context.Context, env events.Enve
 		}
 		if applied {
 			o.log.Info("заказ → cancelled (нет резерва)", "order_id", p.OrderID)
+			metrics.OrderStatus.WithLabelValues(StatusCancelled).Inc()
 		}
 		return nil
 	}
@@ -83,6 +86,7 @@ func (o *Orchestrator) HandleDeliveryEvent(ctx context.Context, env events.Envel
 	}
 	if applied {
 		o.log.Info("заказ → completed (доставлен)", "order_id", p.OrderID)
+		metrics.OrderStatus.WithLabelValues(StatusCompleted).Inc()
 	}
 	return nil
 }
@@ -109,6 +113,7 @@ func (o *Orchestrator) HandlePaymentEvent(ctx context.Context, env events.Envelo
 		}
 		if applied {
 			o.log.Info("заказ → confirmed (оплачен)", "order_id", p.OrderID)
+			metrics.OrderStatus.WithLabelValues(StatusConfirmed).Inc()
 		}
 		return nil
 
@@ -125,6 +130,7 @@ func (o *Orchestrator) HandlePaymentEvent(ctx context.Context, env events.Envelo
 		}
 		if applied {
 			o.log.Info("заказ → payment_failed (запуск компенсации)", "order_id", p.OrderID)
+			metrics.OrderStatus.WithLabelValues(StatusPaymentFailed).Inc()
 		}
 		return nil
 	}

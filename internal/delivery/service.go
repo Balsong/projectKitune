@@ -11,6 +11,7 @@ import (
 
 	deliveryv1 "tea-platform/internal/genpb/delivery/v1"
 	orderv1 "tea-platform/internal/genpb/order/v1"
+	"tea-platform/internal/metrics"
 	"tea-platform/internal/order"
 	"tea-platform/internal/outbox"
 	"tea-platform/pkg/events"
@@ -132,6 +133,7 @@ func (s *Service) HandleOrderEvent(ctx context.Context, env events.Envelope) err
 		return err
 	}
 
+	metrics.DeliveriesTotal.WithLabelValues(d.Status).Inc()
 	s.log.Info("доставка создана", "order_id", ref.OrderID, "fulfillment", fulfillment, "status", d.Status)
 	return nil
 }
@@ -177,6 +179,7 @@ func (s *Service) deliver(ctx context.Context, it Dispatched) error {
 	if err := tx.Commit(ctx); err != nil {
 		return err
 	}
+	metrics.DeliveriesTotal.WithLabelValues(StatusDelivered).Inc()
 	s.log.Info("заказ доставлен", "order_id", it.OrderID)
 	return nil
 }

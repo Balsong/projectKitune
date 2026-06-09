@@ -19,6 +19,7 @@ import (
 	deliveryv1 "tea-platform/internal/genpb/delivery/v1"
 	orderv1 "tea-platform/internal/genpb/order/v1"
 	"tea-platform/internal/kafka"
+	"tea-platform/internal/metrics"
 	"tea-platform/pkg/events"
 	"tea-platform/pkg/response"
 )
@@ -26,6 +27,8 @@ import (
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	cfg := config.Load()
+
+	go metrics.Serve(":"+cfg.MetricsPort, log)
 
 	// gRPC-клиент к Catalog Service.
 	catalogConn, err := grpc.NewClient(

@@ -22,11 +22,14 @@ import (
 	"tea-platform/internal/config"
 	cartv1 "tea-platform/internal/genpb/cart/v1"
 	catalogv1 "tea-platform/internal/genpb/catalog/v1"
+	"tea-platform/internal/metrics"
 )
 
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	cfg := config.Load()
+
+	go metrics.Serve(":"+cfg.MetricsPort, log)
 	ctx := context.Background()
 
 	// Redis для хранения корзин.

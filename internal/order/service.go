@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	cartv1 "tea-platform/internal/genpb/cart/v1"
 	orderv1 "tea-platform/internal/genpb/order/v1"
+	"tea-platform/internal/metrics"
 )
 
 // Service реализует gRPC OrderService.
@@ -30,6 +32,7 @@ func NewService(repo *Repository, cart cartv1.CartServiceClient, log *slog.Logge
 // Cart, формирует заказ, сохраняет его вместе с событием order.created (outbox)
 // и очищает корзину.
 func (s *Service) CreateOrder(ctx context.Context, req *orderv1.CreateOrderRequest) (*orderv1.Order, error) {
+	start := time.Now()
 	if req.GetCartId() == "" {
 		return nil, status.Error(codes.InvalidArgument, "cart_id is required")
 	}
@@ -80,6 +83,10 @@ func (s *Service) CreateOrder(ctx context.Context, req *orderv1.CreateOrderReque
 	if _, err := s.cart.ClearCart(ctx, &cartv1.ClearCartRequest{CartId: req.GetCartId()}); err != nil {
 		s.log.Warn("не удалось очистить корзину после оформления", "cart_id", req.GetCartId(), "error", err)
 	}
+
+	metrics.OrdersCreated.WithLabelValues(o.FulfillmentType).Inc()
+	metrics.OrderStatus.WithLabelValues(StatusCreated).Inc()
+	metrics.CheckoutDuration.Observe(time.Since(start).Seconds())
 
 	s.log.Info("заказ создан",
 		"order_id", o.ID, "total_cents", o.TotalCents,

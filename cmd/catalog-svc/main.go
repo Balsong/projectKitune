@@ -21,12 +21,15 @@ import (
 	"tea-platform/internal/config"
 	"tea-platform/internal/db"
 	catalogv1 "tea-platform/internal/genpb/catalog/v1"
+	"tea-platform/internal/metrics"
 	"tea-platform/migrations"
 )
 
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	cfg := config.Load()
+
+	go metrics.Serve(":"+cfg.MetricsPort, log)
 	ctx := context.Background()
 
 	// PostgreSQL + миграции.

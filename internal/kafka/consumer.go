@@ -9,6 +9,7 @@ import (
 
 	"github.com/segmentio/kafka-go"
 
+	"tea-platform/internal/metrics"
 	"tea-platform/pkg/events"
 )
 
@@ -20,6 +21,7 @@ type HandlerFunc func(ctx context.Context, env events.Envelope) error
 // обработчику. Коммит смещения — только после успешной обработки (at-least-once).
 type Consumer struct {
 	reader *kafka.Reader
+	topic  string
 	log    *slog.Logger
 }
 
@@ -30,7 +32,7 @@ func NewConsumer(brokers, topic, group string, log *slog.Logger) *Consumer {
 		Topic:   topic,
 		GroupID: group,
 	})
-	return &Consumer{reader: reader, log: log}
+	return &Consumer{reader: reader, topic: topic, log: log}
 }
 
 // Run читает сообщения до отмены ctx. «Ядовитые» сообщения (нечитаемый JSON)
@@ -60,6 +62,7 @@ func (c *Consumer) Run(ctx context.Context, handler HandlerFunc) error {
 			continue
 		}
 
+		metrics.EventsConsumed.WithLabelValues(c.topic).Inc()
 		c.commit(ctx, msg)
 	}
 }
