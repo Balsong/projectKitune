@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="КИЦУНЭ — дом чая">
+  <circle cx="50" cy="50" r="49" fill="#ffffff" stroke="#E8DECD" stroke-width="1.5"/>
+  <circle cx="50" cy="50" r="43" fill="none" stroke="#D23A53" stroke-width="1.5" stroke-dasharray="2 3" opacity="0.6"/>
+  <!-- стилизованная морда лисы (кицунэ) -->
+  <g fill="#D23A53">
+    <!-- уши -->
+    <path d="M30 30 L37 50 L24 46 Z"/>
+    <path d="M70 30 L63 50 L76 46 Z"/>
+    <!-- морда -->
+    <path d="M50 38
+             C62 38 70 47 70 58
+             C70 70 61 78 50 78
+             C39 78 30 70 30 58
+             C30 47 38 38 50 38 Z"/>
+  </g>
+  <!-- внутренние отметины -->
+  <path d="M50 50 C56 50 60 55 60 61 C60 67 55 71 50 71 C45 71 40 67 40 61 C40 55 44 50 50 50 Z" fill="#ffffff"/>
+  <!-- глаза -->
+  <circle cx="43" cy="55" r="2.4" fill="#1F1A16"/>
+  <circle cx="57" cy="55" r="2.4" fill="#1F1A16"/>
+  <!-- нос -->
+  <path d="M50 62 l-3 3 h6 Z" fill="#1F1A16"/>
+</svg>

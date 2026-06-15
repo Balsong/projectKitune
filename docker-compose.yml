@@ -299,6 +299,20 @@ services:
     networks:
       - tea-network
 
+  # ── Frontend (React SPA + nginx) ──
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: web
+    ports:
+      - "8081:80"
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+    networks:
+      - tea-network
+
   # ── Централизованные логи (ELK) ──
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
