@@ -28,6 +28,7 @@ type Product struct {
 	Currency    string `json:"currency"`
 	Available   bool   `json:"available"`
 	ImageURL    string `json:"image_url"`
+	SKU         string `json:"sku"`
 }
 
 // toProto конвертирует доменную модель в protobuf-сообщение.
@@ -42,6 +43,7 @@ func (p Product) toProto() *catalogv1.Product {
 		Currency:    p.Currency,
 		Available:   p.Available,
 		ImageUrl:    p.ImageURL,
+		Sku:         p.SKU,
 	}
 }
 

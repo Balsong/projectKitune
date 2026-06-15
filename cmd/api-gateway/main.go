@@ -122,14 +122,16 @@ func healthHandler(w http.ResponseWriter, _ *http.Request) {
 
 // menuItemDTO — представление позиции каталога для фронтенда.
 type menuItemDTO struct {
-	ID         string `json:"id"`
-	Kind       string `json:"kind"`
-	Name       string `json:"name"`
-	Category   string `json:"category"`
-	PriceCents int64  `json:"price_cents"`
-	Currency   string `json:"currency"`
-	Available  bool   `json:"available"`
-	ImageURL   string `json:"image_url"`
+	ID          string `json:"id"`
+	SKU         string `json:"sku"`
+	Kind        string `json:"kind"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+	PriceCents  int64  `json:"price_cents"`
+	Currency    string `json:"currency"`
+	Available   bool   `json:"available"`
+	ImageURL    string `json:"image_url"`
 }
 
 // handleGetMenu проксирует запрос меню в Catalog Service по gRPC.
@@ -153,14 +155,16 @@ func handleGetMenu(log *slog.Logger, client catalogv1.CatalogServiceClient) http
 		items := make([]menuItemDTO, 0, len(resp.GetProducts()))
 		for _, p := range resp.GetProducts() {
 			items = append(items, menuItemDTO{
-				ID:         p.GetId(),
-				Kind:       p.GetKind().String(),
-				Name:       p.GetName(),
-				Category:   p.GetCategory(),
-				PriceCents: p.GetPriceCents(),
-				Currency:   p.GetCurrency(),
-				Available:  p.GetAvailable(),
-				ImageURL:   p.GetImageUrl(),
+				ID:          p.GetId(),
+				SKU:         p.GetSku(),
+				Kind:        p.GetKind().String(),
+				Name:        p.GetName(),
+				Description: p.GetDescription(),
+				Category:    p.GetCategory(),
+				PriceCents:  p.GetPriceCents(),
+				Currency:    p.GetCurrency(),
+				Available:   p.GetAvailable(),
+				ImageURL:    p.GetImageUrl(),
 			})
 		}
 		response.WriteJSON(w, http.StatusOK, items)

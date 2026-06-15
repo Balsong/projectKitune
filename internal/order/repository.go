@@ -82,11 +82,13 @@ type EmitSpec struct {
 	Env    events.Envelope
 }
 
-// Transition атомарно переводит заказ из статуса from в to (только если
-// текущий статус = from) и, если задан emit, пишет событие в outbox в той же
-// транзакции. applied=false означает, что статус не совпал — переход уже
-// выполнен ранее или пришёл не вовремя (идемпотентность саги).
-func (r *Repository) Transition(ctx context.Context, orderID, from, to string, emit *EmitSpec) (bool, error) {
+// Transition атомарно переводит заказ в статус to, если текущий статус —
+// один из from (CAS), и, если задан emit, пишет событие в outbox в той же
+// транзакции. Несколько допустимых from-статусов делают сагу устойчивой к
+// порядку событий (напр. payment.succeeded может прийти раньше, чем
+// stock.reserved успел перевести заказ в payment_pending). applied=false —
+// статус не совпал: переход уже выполнен или пришёл не вовремя (идемпотентность).
+func (r *Repository) Transition(ctx context.Context, orderID string, from []string, to string, emit *EmitSpec) (bool, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return false, fmt.Errorf("order: begin tx: %w", err)
@@ -94,7 +96,7 @@ func (r *Repository) Transition(ctx context.Context, orderID, from, to string, e
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	ct, err := tx.Exec(ctx,
-		`UPDATE orders SET status = $2, updated_at = now() WHERE id = $1 AND status = $3`,
+		`UPDATE orders SET status = $2, updated_at = now() WHERE id = $1 AND status = ANY($3)`,
 		orderID, to, from,
 	)
 	if err != nil {

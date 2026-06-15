@@ -10,24 +10,68 @@
   const read = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch(e){ return fb; } };
   const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
 
+  /* ---------- backend API (тот же origin, /api проксируется nginx → gateway) ---------- */
+  const CARTID_KEY = "kitsune_cart_id";
+  function cartId(){
+    let i = localStorage.getItem(CARTID_KEY);
+    if(!i){ i = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2)); localStorage.setItem(CARTID_KEY, i); }
+    return i;
+  }
+  const H = () => ({ "Content-Type":"application/json", "X-Cart-Id": cartId() });
+  const API = {
+    menu:  () => fetch("/api/v1/menu").then(r=>r.json()),
+    cart:  () => fetch("/api/v1/cart", {headers:H()}).then(r=>r.json()),
+    add:   (id,q) => fetch("/api/v1/cart/items", {method:"POST",   headers:H(), body:JSON.stringify({product_id:id, quantity:q})}).then(r=>r.json()),
+    del:   (id,q) => fetch("/api/v1/cart/items", {method:"DELETE", headers:H(), body:JSON.stringify({product_id:id, quantity:q})}).then(r=>r.json()),
+    clear: () => fetch("/api/v1/cart/clear", {method:"POST", headers:H()}).then(r=>r.json()),
+    order: (b) => fetch("/api/v1/orders", {method:"POST", headers:H(), body:JSON.stringify(b)}),
+    getOrder: (id) => fetch("/api/v1/orders/"+id).then(r=>r.json()),
+    getDelivery: (id) => fetch("/api/v1/orders/"+id+"/delivery").then(r=> r.ok ? r.json() : null)
+  };
+  window.KitsuneAPI = API;
+  window.kitsuneResetCart = () => localStorage.setItem(CARTID_KEY, crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+
+  /* sku (id из дизайна) <-> backend UUID, из /api/v1/menu */
+  let SKU2ID = {}, ID2SKU = {}, MENU_READY = null;
+  function loadMenu(){
+    if(MENU_READY) return MENU_READY;
+    MENU_READY = API.menu().then(list=>{
+      (list||[]).forEach(p=>{ if(p.sku){ SKU2ID[p.sku]=p.id; ID2SKU[p.id]=p.sku; } });
+    }).catch(()=>{});
+    return MENU_READY;
+  }
+  window.KitsuneMenuReady = loadMenu;
+
+  /* ---------- cart (backend-backed, с локальным кэшем для синхронных чтений) ---------- */
   const Cart = {
-    items(){ return read(CART_KEY, []); },
-    count(){ return this.items().reduce((s,i)=>s+i.qty,0); },
-    total(){ return this.items().reduce((s,i)=>{ const p=window.KITSUNE_FIND(i.id); return s + (p?p.price:0)*i.qty; },0); },
-    add(id, qty=1){
-      const items = this.items();
-      const ex = items.find(i=>i.id===id);
-      if(ex) ex.qty += qty; else items.push({id, qty});
-      write(CART_KEY, items); this.sync(); return ex ? ex.qty : qty;
+    _state: [],  // [{id:sku, qty, name, price(₽), lineCents}]
+    items(){ return this._state.map(i=>({id:i.id, qty:i.qty})); },
+    count(){ return this._state.reduce((s,i)=>s+i.qty,0); },
+    total(){ return this._state.reduce((s,i)=>s+i.lineCents,0)/100; },
+    async refresh(){
+      await loadMenu();
+      try{
+        const c = await API.cart();
+        this._state = (c.items||[]).map(it=>({
+          id: ID2SKU[it.product_id] || it.product_id,
+          qty: it.quantity, name: it.name,
+          price: (it.unit_price_cents||0)/100, lineCents: it.subtotal_cents||0
+        }));
+      }catch(e){ this._state = []; }
+      this.sync();
+      return this._state;
     },
-    setQty(id, qty){
-      let items = this.items();
-      if(qty<=0){ items = items.filter(i=>i.id!==id); }
-      else { const it = items.find(i=>i.id===id); if(it) it.qty=qty; }
-      write(CART_KEY, items); this.sync();
+    async add(sku, qty=1){ await loadMenu(); const id=SKU2ID[sku]; if(!id) return; await API.add(id, qty); await this.refresh(); },
+    async setQty(sku, qty){
+      await loadMenu(); const id=SKU2ID[sku]; if(!id) return;
+      const cur = (this._state.find(i=>i.id===sku)||{}).qty || 0;
+      if(qty<=0) await API.del(id, 0);
+      else if(qty>cur) await API.add(id, qty-cur);
+      else if(qty<cur) await API.del(id, cur-qty);
+      await this.refresh();
     },
-    remove(id){ write(CART_KEY, this.items().filter(i=>i.id!==id)); this.sync(); },
-    clear(){ write(CART_KEY, []); this.sync(); },
+    async remove(sku){ await loadMenu(); const id=SKU2ID[sku]; if(!id) return; await API.del(id, 0); await this.refresh(); },
+    async clear(){ try{ await API.clear(); }catch(e){} await this.refresh(); },
     sync(){
       document.querySelectorAll("[data-cart-count]").forEach(el=>{
         const c = this.count(); el.textContent = c; el.dataset.empty = c>0?"0":"1";
@@ -282,7 +326,7 @@
     window.addEventListener("scroll", queueReveal, {passive:true});
     window.addEventListener("resize", queueReveal);
     window.addEventListener("load", queueReveal);
-    Cart.sync();
+    Cart.refresh();
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();

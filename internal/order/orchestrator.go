@@ -41,7 +41,7 @@ func (o *Orchestrator) HandleInventoryEvent(ctx context.Context, env events.Enve
 
 	switch env.EventType {
 	case events.EventStockReserved:
-		applied, err := o.repo.Transition(ctx, p.OrderID, StatusCreated, StatusPaymentPending, nil)
+		applied, err := o.repo.Transition(ctx, p.OrderID, []string{StatusCreated}, StatusPaymentPending, nil)
 		if err != nil {
 			return err
 		}
@@ -57,7 +57,7 @@ func (o *Orchestrator) HandleInventoryEvent(ctx context.Context, env events.Enve
 		if err != nil {
 			return err
 		}
-		applied, err := o.repo.Transition(ctx, p.OrderID, StatusCreated, StatusCancelled,
+		applied, err := o.repo.Transition(ctx, p.OrderID, []string{StatusCreated}, StatusCancelled,
 			&EmitSpec{Source: outbox.SourceOrder, Topic: events.TopicOrders, Env: cancelEnv})
 		if err != nil {
 			return err
@@ -80,7 +80,7 @@ func (o *Orchestrator) HandleDeliveryEvent(ctx context.Context, env events.Envel
 	if err := env.UnmarshalPayload(&p); err != nil {
 		return err
 	}
-	applied, err := o.repo.Transition(ctx, p.OrderID, StatusConfirmed, StatusCompleted, nil)
+	applied, err := o.repo.Transition(ctx, p.OrderID, []string{StatusConfirmed}, StatusCompleted, nil)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (o *Orchestrator) HandlePaymentEvent(ctx context.Context, env events.Envelo
 		if err != nil {
 			return err
 		}
-		applied, err := o.repo.Transition(ctx, p.OrderID, StatusPaymentPending, StatusConfirmed,
+		applied, err := o.repo.Transition(ctx, p.OrderID, []string{StatusCreated, StatusPaymentPending}, StatusConfirmed,
 			&EmitSpec{Source: outbox.SourceOrder, Topic: events.TopicOrders, Env: confirmEnv})
 		if err != nil {
 			return err
@@ -123,7 +123,7 @@ func (o *Orchestrator) HandlePaymentEvent(ctx context.Context, env events.Envelo
 		if err != nil {
 			return err
 		}
-		applied, err := o.repo.Transition(ctx, p.OrderID, StatusPaymentPending, StatusPaymentFailed,
+		applied, err := o.repo.Transition(ctx, p.OrderID, []string{StatusCreated, StatusPaymentPending}, StatusPaymentFailed,
 			&EmitSpec{Source: outbox.SourceOrder, Topic: events.TopicOrders, Env: cancelEnv})
 		if err != nil {
 			return err
