@@ -245,13 +245,20 @@
   placeBtn.addEventListener('click', async ()=>{
     if(!KitsuneCart.items().length) return;
     const type = document.querySelector('#delivery-opts .is-active')?.dataset.val || 'delivery';
+    const pay  = document.querySelector('#payment-opts .is-active')?.dataset.val || 'card';
+    const items = KitsuneCart.items();          // [{id:sku, qty}] — до очистки
     placeBtn.disabled = true; const orig = placeBtn.textContent; placeBtn.textContent = 'Оформляем…';
     try{
       const res = await KitsuneAPI.order({ fulfillment_type: FULFILLMENT[type] || 'food_courier', address: '' });
       if(!res.ok){ const err = await res.json().catch(()=>({})); throw new Error(err.error || ('HTTP '+res.status)); }
       const order = await res.json();
+      // сохраняем заказ в историю (для account.html и живого статуса)
+      const rec = { no:'KT-'+order.id.slice(0,8).toUpperCase(), id:order.id, date:new Date().toISOString(),
+        items, total:(order.total_cents||0)/100, type, pay, status:'Готовится' };
+      let hist=[]; try{ hist=JSON.parse(localStorage.getItem('kitsune_orders'))||[]; }catch(e){}
+      hist.unshift(rec); try{ localStorage.setItem('kitsune_orders', JSON.stringify(hist)); }catch(e){}
       await KitsuneCart.refresh();
-      document.getElementById('order-no').textContent = 'KT-' + order.id.slice(0,8).toUpperCase();
+      document.getElementById('order-no').textContent = rec.no;
       document.getElementById('success').classList.add('is-open');
     }catch(e){
       kitsuneToast('Не удалось оформить: ' + e.message);

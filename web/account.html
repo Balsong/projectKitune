@@ -184,7 +184,7 @@
             {no:'KT-1907', date:'2026-05-28T13:10:00', items:[{id:'tea-tgy',qty:1},{id:'des-cheesebao',qty:1}], total:960, type:'pickup', pay:'card', status:'Доставлен'}];
   }
   const typeLabel={delivery:'Доставка',pickup:'Самовывоз',eatin:'В зале'};
-  const statusBadge=s=> s==='Готовится'?'badge--ochre': s==='Доставлен'?'badge--sage':'';
+  const statusBadge=s=> (s==='Готовится'||s==='Оплата'||s==='Создан')?'badge--ochre': s==='Доставлен'?'badge--sage':'';
   const ordList=document.getElementById('orders-list');
   if(!orders.length){ document.getElementById('orders-empty').style.display=''; }
   else ordList.innerHTML = orders.map(o=>{
@@ -193,7 +193,7 @@
     return `<div class="card reveal" style="padding:22px;margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
         <div>
-          <div style="display:flex;align-items:center;gap:10px"><b style="font-family:var(--font-head);font-size:19px">Заказ ${o.no}</b><span class="badge ${statusBadge(o.status)}">${o.status}</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><b style="font-family:var(--font-head);font-size:19px">Заказ ${o.no}</b><span class="badge ${statusBadge(o.status)}" data-oid="${o.id||''}">${o.status}</span></div>
           <div class="card__meta" style="margin-top:6px">${ds} · ${typeLabel[o.type]||''}</div>
           <p class="card__desc" style="font-size:14.5px;margin-top:8px;max-width:52ch">${names}</p>
         </div>
@@ -209,6 +209,24 @@
     const b=e.target.closest('[data-repeat]'); if(!b) return;
     try{ JSON.parse(b.dataset.repeat).forEach(i=>KitsuneCart.add(i.id,i.qty)); kitsuneToast('Повторили заказ — в корзине'); }catch(err){}
   });
+
+  // живой статус заказов из backend (саги) — для заказов с реальным id
+  const STATUS_RU={ORDER_STATUS_CREATED:'Создан',ORDER_STATUS_PAYMENT_PENDING:'Оплата',ORDER_STATUS_PAID:'Оплачен',ORDER_STATUS_CONFIRMED:'Готовится',ORDER_STATUS_COMPLETED:'Доставлен',ORDER_STATUS_CANCELLED:'Отменён',ORDER_STATUS_PAYMENT_FAILED:'Оплата отклонена'};
+  const TERMINAL=new Set(['ORDER_STATUS_COMPLETED','ORDER_STATUS_CANCELLED','ORDER_STATUS_PAYMENT_FAILED']);
+  async function pollStatuses(){
+    let pending=false;
+    for(const o of orders.filter(x=>x.id)){
+      try{
+        const r=await KitsuneAPI.getOrder(o.id);
+        const lbl=STATUS_RU[r.status]||o.status;
+        const el=ordList.querySelector('[data-oid="'+o.id+'"]');
+        if(el){ el.textContent=lbl; el.className='badge '+statusBadge(lbl); }
+        if(!TERMINAL.has(r.status)) pending=true;
+      }catch(e){}
+    }
+    if(pending) setTimeout(pollStatuses,3000);
+  }
+  pollStatuses();
 
   // favourites
   let fav=[]; try{ fav=JSON.parse(localStorage.getItem('kitsune_fav_v1'))||[]; }catch(e){}

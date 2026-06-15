@@ -150,15 +150,36 @@
 <script src="js/kitsune.js"></script>
 <script>
   document.getElementById('r-date').min = new Date().toISOString().split('T')[0];
-  document.getElementById('resv-form').addEventListener('submit', e=>{
+  document.getElementById('resv-form').addEventListener('submit', async e=>{
     e.preventDefault();
     const need=['r-date','r-time','r-guests','r-first','r-phone'];
     let ok=true;
     need.forEach(id=>{ const el=document.getElementById(id); if(!el.value){ el.style.borderColor='var(--clay)'; ok=false; } else el.style.borderColor=''; });
     if(!ok){ kitsuneToast('Заполните обязательные поля'); return; }
-    document.getElementById('resv-ok').style.display='block';
-    kitsuneToast('Бронь отправлена');
-    e.target.querySelector('button[type=submit]').textContent='Отправлено ✓';
+
+    const val = id => (document.getElementById(id).value || '').trim();
+    const name = (val('r-first') + ' ' + val('r-last')).trim();
+    const customer = [name, val('r-phone'), val('r-guests')].filter(Boolean).join(' · ');
+    const when = val('r-date') + ' ' + val('r-time');
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Отправляем…';
+    try{
+      const res = await fetch('/api/v1/book', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ table_id: 0, customer, time: when })
+      });
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(data.error || ('HTTP '+res.status));
+      const no = data.booking_id ? ('KT-' + data.booking_id.slice(0,8).toUpperCase()) : '';
+      const okBox = document.getElementById('resv-ok');
+      okBox.innerHTML = '<b>Заявка отправлена.</b> ' + (no ? ('Номер брони <b>'+no+'</b>. ') : '') + 'Мы перезвоним для подтверждения в течение 15 минут.';
+      okBox.style.display = 'block';
+      kitsuneToast('Бронь отправлена');
+      btn.textContent = 'Отправлено ✓';
+    }catch(err){
+      kitsuneToast('Не удалось отправить: ' + err.message);
+      btn.disabled = false; btn.textContent = 'Забронировать';
+    }
   });
 </script>
 </body>
