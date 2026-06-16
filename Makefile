@@ -24,3 +24,7 @@ run-local:
 # Сайт: http://localhost:8081
 web:
 	docker compose up -d --build web
+
+# ── E2E-тесты сайта (через web :8081) ──
+test-e2e:
+	bash tests/e2e.sh
