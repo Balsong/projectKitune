@@ -33,6 +33,7 @@ message Product {
   bool available = 8;        // для блюд — отсутствие в стоп-листе
   string image_url = 9;
   string sku = 10;           // стабильный id из дизайна (frontend data-add)
+  string unit = 11;          // объём/порция (напр. «900 мл», «0,3 л»)
 }
 
 message ListProductsRequest {

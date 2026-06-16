@@ -132,6 +132,7 @@ type menuItemDTO struct {
 	Currency    string `json:"currency"`
 	Available   bool   `json:"available"`
 	ImageURL    string `json:"image_url"`
+	Unit        string `json:"unit"`
 }
 
 // handleGetMenu проксирует запрос меню в Catalog Service по gRPC.
@@ -165,6 +166,7 @@ func handleGetMenu(log *slog.Logger, client catalogv1.CatalogServiceClient) http
 				Currency:    p.GetCurrency(),
 				Available:   p.GetAvailable(),
 				ImageURL:    p.GetImageUrl(),
+				Unit:        p.GetUnit(),
 			})
 		}
 		response.WriteJSON(w, http.StatusOK, items)

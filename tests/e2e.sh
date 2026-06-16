@@ -76,8 +76,8 @@ KINDS=$(jget "$MENU" "len({x['kind'] for x in d})")
 [ "$KINDS" -ge 2 ] 2>/dev/null && ok "есть и чай, и блюда ($KINDS вида)" || bad "видов товара: $KINDS"
 
 # id хитового блюда для дальнейших тестов
-DISH_ID=$(jget "$MENU" "[x['id'] for x in d if x['sku']=='kit-duck'][0]")
-TEA_ID=$(jget "$MENU" "[x['id'] for x in d if x['sku']=='tea-tgy'][0]")
+DISH_ID=$(jget "$MENU" "[x['id'] for x in d if x['sku']=='cof-cappuccino'][0]")
+TEA_ID=$(jget "$MENU" "[x['id'] for x in d if x['sku']=='cha-red'][0]")
 
 # ---------- 4. корзина ----------
 sect "4 · Корзина (/api/v1/cart)"
@@ -143,8 +143,9 @@ fi
 # ---------- 6. компенсация (превышение лимита оплаты) ----------
 sect "6 · Компенсация саги (отказ оплаты)"
 CART="e2e-fail-$$-$RANDOM"; H=(-H "Content-Type: application/json" -H "X-Cart-Id: $CART")
-# 8 × утка (129 000 коп) = 1 032 000 коп — превышает лимит mock-оплаты (1 000 000)
-curl -s -X POST "${H[@]}" -d "{\"product_id\":\"$DISH_ID\",\"quantity\":8}" "$BASE/api/v1/cart/items" >/dev/null
+# дорогой авторский чай ×11 (95 000 × 11 = 1 045 000 коп) превышает лимит mock-оплаты (1 000 000)
+EXP_ID=$(jget "$MENU" "[x['id'] for x in d if x['sku']=='auth-dhp'][0]")
+curl -s -X POST "${H[@]}" -d "{\"product_id\":\"$EXP_ID\",\"quantity\":11}" "$BASE/api/v1/cart/items" >/dev/null
 OID2=$(jget "$(curl -s -X POST "${H[@]}" -d '{"fulfillment_type":"food_courier","address":"x"}' "$BASE/api/v1/orders")" "d['id']")
 if [ -n "$OID2" ] && [ "$OID2" != "__ERR__" ]; then
   FINAL2=""

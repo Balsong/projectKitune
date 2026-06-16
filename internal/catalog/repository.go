@@ -19,7 +19,7 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-const selectColumns = `id, kind, name, description, category, price_cents, currency, available, image_url, COALESCE(sku, '')`
+const selectColumns = `id, kind, name, description, category, price_cents, currency, available, image_url, COALESCE(sku, ''), COALESCE(unit, '')`
 
 // List возвращает позиции с опциональной фильтрацией по виду и категории.
 // Пустые kind/category означают «без фильтра».
@@ -74,7 +74,7 @@ func scanProduct(row scanRow) (Product, error) {
 	var p Product
 	err := row.Scan(
 		&p.ID, &p.Kind, &p.Name, &p.Description, &p.Category,
-		&p.PriceCents, &p.Currency, &p.Available, &p.ImageURL, &p.SKU,
+		&p.PriceCents, &p.Currency, &p.Available, &p.ImageURL, &p.SKU, &p.Unit,
 	)
 	if err != nil {
 		return Product{}, err

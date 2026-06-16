@@ -83,7 +83,8 @@ type Product struct {
 	Currency      string                 `protobuf:"bytes,7,opt,name=currency,proto3" json:"currency,omitempty"`                        // ISO 4217, напр. "RUB"
 	Available     bool                   `protobuf:"varint,8,opt,name=available,proto3" json:"available,omitempty"`                     // для блюд — отсутствие в стоп-листе
 	ImageUrl      string                 `protobuf:"bytes,9,opt,name=image_url,json=imageUrl,proto3" json:"image_url,omitempty"`
-	Sku           string                 `protobuf:"bytes,10,opt,name=sku,proto3" json:"sku,omitempty"` // стабильный id из дизайна (frontend data-add)
+	Sku           string                 `protobuf:"bytes,10,opt,name=sku,proto3" json:"sku,omitempty"`   // стабильный id из дизайна (frontend data-add)
+	Unit          string                 `protobuf:"bytes,11,opt,name=unit,proto3" json:"unit,omitempty"` // объём/порция (напр. «900 мл», «0,3 л»)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -184,6 +185,13 @@ func (x *Product) GetImageUrl() string {
 func (x *Product) GetSku() string {
 	if x != nil {
 		return x.Sku
+	}
+	return ""
+}
+
+func (x *Product) GetUnit() string {
+	if x != nil {
+		return x.Unit
 	}
 	return ""
 }
@@ -379,7 +387,7 @@ var File_catalog_v1_catalog_proto protoreflect.FileDescriptor
 const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\n" +
 	"\x18catalog/v1/catalog.proto\x12\n" +
-	"catalog.v1\"\xa2\x02\n" +
+	"catalog.v1\"\xb6\x02\n" +
 	"\aProduct\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12+\n" +
 	"\x04kind\x18\x02 \x01(\x0e2\x17.catalog.v1.ProductKindR\x04kind\x12\x12\n" +
@@ -392,7 +400,8 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\tavailable\x18\b \x01(\bR\tavailable\x12\x1b\n" +
 	"\timage_url\x18\t \x01(\tR\bimageUrl\x12\x10\n" +
 	"\x03sku\x18\n" +
-	" \x01(\tR\x03sku\"^\n" +
+	" \x01(\tR\x03sku\x12\x12\n" +
+	"\x04unit\x18\v \x01(\tR\x04unit\"^\n" +
 	"\x13ListProductsRequest\x12+\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x17.catalog.v1.ProductKindR\x04kind\x12\x1a\n" +
 	"\bcategory\x18\x02 \x01(\tR\bcategory\"G\n" +
