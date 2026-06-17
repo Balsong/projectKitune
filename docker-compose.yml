@@ -89,6 +89,32 @@ services:
     networks:
       - tea-network
 
+  account-svc:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        SERVICE: account-svc
+    container_name: account-svc
+    environment:
+      GRPC_PORT: "9094"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: dev
+      DB_PASSWORD: dev
+      DB_NAME: tea_platform
+      REDIS_ADDR: redis:6379
+    ports:
+      - "9094:9094"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - tea-network
+
   cart-svc:
     build:
       context: .
@@ -183,6 +209,7 @@ services:
       CART_ADDR: cart-svc:9091
       ORDER_ADDR: order-svc:9092
       DELIVERY_ADDR: delivery-svc:9093
+      ACCOUNT_ADDR: account-svc:9094
       KAFKA_BROKERS: kafka:9092
     ports:
       - "8080:8080"
@@ -194,6 +221,8 @@ services:
       order-svc:
         condition: service_started
       delivery-svc:
+        condition: service_started
+      account-svc:
         condition: service_started
       kafka:
         condition: service_healthy

@@ -72,17 +72,17 @@
     <div class="crumbs reveal"><a href="index.html">Главная</a> &nbsp;/&nbsp; Личный кабинет</div>
     <div class="split" style="align-items:center;gap:24px">
       <div class="reveal reveal-d1" style="display:flex;align-items:center;gap:18px">
-        <div class="brand__seal zh" style="width:72px;height:72px;font-size:34px">林</div>
+        <div class="brand__seal zh" id="acc-seal" style="width:72px;height:72px;font-size:34px">狐</div>
         <div>
-          <h1 class="h3" style="font-size:28px">Мэй Линь</h1>
-          <p class="muted">mei@kitsune.tea · +7 925 ···-··-08</p>
+          <h1 class="h3" id="acc-name" style="font-size:28px">Гость</h1>
+          <p class="muted" id="acc-email">—</p>
           <span class="badge badge--ochre" style="margin-top:6px">Уровень «Пуэр» · −10%</span>
         </div>
       </div>
-      <div class="reveal reveal-d2" style="display:flex;gap:14px;justify-content:flex-end;flex-wrap:wrap">
-        <div class="card" style="padding:18px 22px;text-align:center"><div class="price" style="color:var(--clay)">1 480</div><div class="card__meta">бонусов</div></div>
+      <div class="reveal reveal-d2" style="display:flex;gap:14px;justify-content:flex-end;flex-wrap:wrap;align-items:center">
         <div class="card" style="padding:18px 22px;text-align:center"><div class="price" id="stat-orders">0</div><div class="card__meta">заказов</div></div>
         <div class="card" style="padding:18px 22px;text-align:center"><div class="price" id="stat-fav">0</div><div class="card__meta">в избранном</div></div>
+        <button class="btn btn--ghost btn--sm" id="logout-btn" style="display:none">Выйти</button>
       </div>
     </div>
   </div>
@@ -167,6 +167,17 @@
 <script src="js/kitsune.js"></script>
 <script>
 (function(){
+  // auth-гейт: кабинет только для вошедших; иначе — на страницу входа
+  KitsuneAuth.me().then(u=>{
+    if(!u){ location.replace('login.html'); return; }
+    document.getElementById('acc-name').textContent = u.name || 'Гость';
+    document.getElementById('acc-email').textContent = [u.email, u.phone].filter(Boolean).join(' · ') || '—';
+    const seal = document.getElementById('acc-seal');
+    if(seal && (u.name||u.email)) seal.textContent = (u.name||u.email).trim().charAt(0).toUpperCase();
+    const lo = document.getElementById('logout-btn');
+    if(lo){ lo.style.display=''; lo.addEventListener('click', async ()=>{ await KitsuneAuth.logout(); location.replace('login.html'); }); }
+  });
+
   // tabs
   document.querySelectorAll('#tabs .chip').forEach(ch=>ch.addEventListener('click',()=>{
     document.querySelectorAll('#tabs .chip').forEach(x=>x.classList.remove('is-active'));

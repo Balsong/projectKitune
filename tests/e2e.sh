@@ -167,6 +167,43 @@ BID=$(jget "$BK" "d.get('booking_id','')")
 [ -n "$BID" ] && [ "$BID" != "__ERR__" ] && ok "бронь принята (booking_id=$BID)" || bad "бронь не принята" "$BK"
 [ "$(jget "$BK" "d.get('status')")" = "booking_pending" ] && ok "статус брони booking_pending" || bad "неожиданный статус брони"
 
+# ---------- 8. аккаунт: регистрация / вход / сессия ----------
+sect "8 · Аккаунт (/api/v1/auth)"
+AEMAIL="e2e-$$-$RANDOM@kitsune.tea"
+REG=$(curl -s -X POST -H "Content-Type: application/json" \
+  -d "{\"email\":\"$AEMAIL\",\"password\":\"secret123\",\"name\":\"E2E\",\"phone\":\"+70000000000\",\"consent_personal_data\":true}" \
+  "$BASE/api/v1/auth/register")
+ATOKEN=$(jget "$REG" "d.get('session_token','')")
+[ -n "$ATOKEN" ] && [ "$ATOKEN" != "__ERR__" ] && ok "регистрация (с согласием ПДн) → токен" || bad "регистрация не вернула токен" "$REG"
+[ "$(jget "$REG" "d['user']['email']")" = "$(printf '%s' "$AEMAIL" | tr 'A-Z' 'a-z')" ] && ok "в ответе корректный пользователь" || bad "пользователь в ответе неверный"
+
+# регистрация без согласия → 400
+hc=$(code -X POST -H "Content-Type: application/json" -d "{\"email\":\"x$AEMAIL\",\"password\":\"secret123\",\"consent_personal_data\":false}" "$BASE/api/v1/auth/register")
+[ "$hc" = "400" ] && ok "регистрация без согласия ПДн → 400" || bad "без согласия → $hc (ожидали 400)"
+
+# дубликат e-mail → 409
+hc=$(code -X POST -H "Content-Type: application/json" -d "{\"email\":\"$AEMAIL\",\"password\":\"secret123\",\"consent_personal_data\":true}" "$BASE/api/v1/auth/register")
+[ "$hc" = "409" ] && ok "повторный e-mail → 409" || bad "дубль e-mail → $hc (ожидали 409)"
+
+# me с токеном → пользователь
+[ "$(jget "$(curl -s "$BASE/api/v1/auth/me" -H "Authorization: Bearer $ATOKEN")" "d.get('email','')")" = "$(printf '%s' "$AEMAIL" | tr 'A-Z' 'a-z')" ] && ok "me с токеном → текущий пользователь" || bad "me не вернул пользователя"
+
+# вход верный → токен
+LToken=$(jget "$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$AEMAIL\",\"password\":\"secret123\"}" "$BASE/api/v1/auth/login")" "d.get('session_token','')")
+[ -n "$LToken" ] && [ "$LToken" != "__ERR__" ] && ok "вход с верным паролем → токен" || bad "вход не вернул токен"
+
+# вход неверный → 401
+hc=$(code -X POST -H "Content-Type: application/json" -d "{\"email\":\"$AEMAIL\",\"password\":\"wrong\"}" "$BASE/api/v1/auth/login")
+[ "$hc" = "401" ] && ok "вход с неверным паролем → 401" || bad "неверный пароль → $hc (ожидали 401)"
+
+# logout, затем me → 401
+curl -s -X POST "$BASE/api/v1/auth/logout" -H "Authorization: Bearer $ATOKEN" >/dev/null
+hc=$(code "$BASE/api/v1/auth/me" -H "Authorization: Bearer $ATOKEN")
+[ "$hc" = "401" ] && ok "после logout сессия недействительна (me → 401)" || bad "me после logout → $hc (ожидали 401)"
+
+# страницы входа/регистрации отдаются
+for p in /login.html /register.html; do page "$p"; done
+
 # ---------- итог ----------
 printf "\n${c_bold}Итого:${c_off} ${c_green}%d прошло${c_off}, " "$PASS"
 if [ "$FAIL" -eq 0 ]; then

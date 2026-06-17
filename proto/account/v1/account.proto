@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package account.v1;
+
+option go_package = "tea-platform/internal/genpb/account/v1;accountv1";
+
+// AccountService — регистрация, вход и сессии пользователей.
+// Пароли хранятся как bcrypt-хэш; сессии — в Redis (opaque-токен).
+service AccountService {
+  rpc Register(RegisterRequest) returns (AuthResponse);
+  rpc Login(LoginRequest) returns (AuthResponse);
+  rpc GetSession(SessionRequest) returns (User); // валидация токена
+  rpc Logout(SessionRequest) returns (LogoutResponse);
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  string phone = 4;
+  string created_at = 5; // RFC3339
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string name = 3;
+  string phone = 4;
+  bool consent_personal_data = 5; // согласие на обработку персональных данных
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message AuthResponse {
+  string session_token = 1;
+  User user = 2;
+}
+
+message SessionRequest {
+  string session_token = 1;
+}
+
+message LogoutResponse {
+  bool ok = 1;
+}

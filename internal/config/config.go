@@ -16,6 +16,7 @@ type Config struct {
 	CartAddr     string // адрес gRPC Cart для клиентов (api-gateway, order-svc)
 	OrderAddr    string // адрес gRPC Order для клиентов (api-gateway, payment, delivery)
 	DeliveryAddr string // адрес gRPC Delivery для клиентов (api-gateway)
+	AccountAddr  string // адрес gRPC Account для клиентов (api-gateway)
 	DBHost       string
 	DBPort       string
 	DBUser       string
@@ -39,6 +40,7 @@ func Load() *Config {
 		CartAddr:     getEnv("CART_ADDR", "cart-svc:9091"),
 		OrderAddr:    getEnv("ORDER_ADDR", "order-svc:9092"),
 		DeliveryAddr: getEnv("DELIVERY_ADDR", "delivery-svc:9093"),
+		AccountAddr:  getEnv("ACCOUNT_ADDR", "account-svc:9094"),
 		DBHost:       getEnv("DB_HOST", "postgres"),
 		DBPort:       getEnv("DB_PORT", "5432"),
 		DBUser:       getEnv("DB_USER", "dev"),

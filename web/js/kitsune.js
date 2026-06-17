@@ -31,6 +31,40 @@
   window.KitsuneAPI = API;
   window.kitsuneResetCart = () => localStorage.setItem(CARTID_KEY, crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
 
+  /* ---------- аутентификация (сессия в Redis на бэке, токен в localStorage) ---------- */
+  const TOKEN_KEY = "kitsune_token";
+  const Auth = {
+    token(){ return localStorage.getItem(TOKEN_KEY) || ""; },
+    setToken(t){ if(t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); },
+    isAuthed(){ return !!this.token(); },
+    headers(){ const t = this.token(); return t ? { "Authorization": "Bearer " + t } : {}; },
+    async register(body){
+      const r = await fetch("/api/v1/auth/register", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error || ("HTTP "+r.status));
+      this.setToken(d.session_token); return d.user;
+    },
+    async login(email, password){
+      const r = await fetch("/api/v1/auth/login", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email, password}) });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error || ("HTTP "+r.status));
+      this.setToken(d.session_token); return d.user;
+    },
+    async me(){
+      if(!this.token()) return null;
+      try{
+        const r = await fetch("/api/v1/auth/me", { headers: this.headers() });
+        if(!r.ok){ this.setToken(""); return null; }
+        return await r.json();
+      }catch(e){ return null; }
+    },
+    async logout(){
+      try{ await fetch("/api/v1/auth/logout", { method:"POST", headers: this.headers() }); }catch(e){}
+      this.setToken("");
+    }
+  };
+  window.KitsuneAuth = Auth;
+
   /* sku (id из дизайна) <-> backend UUID, из /api/v1/menu */
   let SKU2ID = {}, ID2SKU = {}, MENU_READY = null;
   function loadMenu(){

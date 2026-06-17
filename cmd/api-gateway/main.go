@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"tea-platform/internal/config"
+	accountv1 "tea-platform/internal/genpb/account/v1"
 	cartv1 "tea-platform/internal/genpb/cart/v1"
 	catalogv1 "tea-platform/internal/genpb/catalog/v1"
 	deliveryv1 "tea-platform/internal/genpb/delivery/v1"
@@ -78,6 +79,18 @@ func main() {
 	defer func() { _ = deliveryConn.Close() }()
 	deliveryClient := deliveryv1.NewDeliveryServiceClient(deliveryConn)
 
+	// gRPC-клиент к Account Service.
+	accountConn, err := grpc.NewClient(
+		cfg.AccountAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Error("не удалось создать gRPC-клиент Account", "error", err)
+		os.Exit(1)
+	}
+	defer func() { _ = accountConn.Close() }()
+	accountClient := accountv1.NewAccountServiceClient(accountConn)
+
 	// Kafka producer (бронь столов).
 	kafkaProd, err := kafka.NewProducer(cfg.KafkaBrokers)
 	if err != nil {
@@ -102,6 +115,12 @@ func main() {
 	mux.HandleFunc("POST /api/v1/orders", handleCreateOrder(log, orderClient))
 	mux.HandleFunc("GET /api/v1/orders/{id}", handleGetOrder(log, orderClient))
 	mux.HandleFunc("GET /api/v1/orders/{id}/delivery", handleGetDelivery(log, deliveryClient))
+
+	// Аккаунт: регистрация, вход, текущий пользователь, выход.
+	mux.HandleFunc("POST /api/v1/auth/register", handleRegister(log, accountClient))
+	mux.HandleFunc("POST /api/v1/auth/login", handleLogin(log, accountClient))
+	mux.HandleFunc("POST /api/v1/auth/logout", handleLogout(log, accountClient))
+	mux.HandleFunc("GET /api/v1/auth/me", handleMe(log, accountClient))
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
