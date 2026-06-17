@@ -188,6 +188,12 @@
     if(seal && (u.name||u.email)) seal.textContent = (u.name||u.email).trim().charAt(0).toUpperCase();
     const lo = document.getElementById('logout-btn');
     if(lo){ lo.style.display=''; lo.addEventListener('click', async ()=>{ await KitsuneAuth.logout(); location.replace('login.html'); }); }
+    if(u.role === 'admin'){
+      const a = document.createElement('a');
+      a.href = 'admin.html'; a.className = 'btn btn--sm'; a.textContent = 'Админ-панель';
+      a.style.marginTop = '10px';
+      lo && lo.parentNode.insertBefore(a, lo);
+    }
   });
 
   // tabs

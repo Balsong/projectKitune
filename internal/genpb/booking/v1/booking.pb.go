@@ -257,6 +257,102 @@ func (x *ListBookingsRequest) GetUserId() string {
 	return ""
 }
 
+type ListAllBookingsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"` // 0 → дефолт (100)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAllBookingsRequest) Reset() {
+	*x = ListAllBookingsRequest{}
+	mi := &file_booking_v1_booking_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAllBookingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAllBookingsRequest) ProtoMessage() {}
+
+func (x *ListAllBookingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_booking_v1_booking_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAllBookingsRequest.ProtoReflect.Descriptor instead.
+func (*ListAllBookingsRequest) Descriptor() ([]byte, []int) {
+	return file_booking_v1_booking_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ListAllBookingsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type UpdateBookingStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"` // confirmed | cancelled | done
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateBookingStatusRequest) Reset() {
+	*x = UpdateBookingStatusRequest{}
+	mi := &file_booking_v1_booking_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateBookingStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateBookingStatusRequest) ProtoMessage() {}
+
+func (x *UpdateBookingStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_booking_v1_booking_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateBookingStatusRequest.ProtoReflect.Descriptor instead.
+func (*UpdateBookingStatusRequest) Descriptor() ([]byte, []int) {
+	return file_booking_v1_booking_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *UpdateBookingStatusRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *UpdateBookingStatusRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
 type ListBookingsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Bookings      []*Booking             `protobuf:"bytes,1,rep,name=bookings,proto3" json:"bookings,omitempty"`
@@ -266,7 +362,7 @@ type ListBookingsResponse struct {
 
 func (x *ListBookingsResponse) Reset() {
 	*x = ListBookingsResponse{}
-	mi := &file_booking_v1_booking_proto_msgTypes[3]
+	mi := &file_booking_v1_booking_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -278,7 +374,7 @@ func (x *ListBookingsResponse) String() string {
 func (*ListBookingsResponse) ProtoMessage() {}
 
 func (x *ListBookingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_booking_v1_booking_proto_msgTypes[3]
+	mi := &file_booking_v1_booking_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -291,7 +387,7 @@ func (x *ListBookingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListBookingsResponse.ProtoReflect.Descriptor instead.
 func (*ListBookingsResponse) Descriptor() ([]byte, []int) {
-	return file_booking_v1_booking_proto_rawDescGZIP(), []int{3}
+	return file_booking_v1_booking_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListBookingsResponse) GetBookings() []*Booking {
@@ -326,12 +422,19 @@ const file_booking_v1_booking_proto_rawDesc = "" +
 	"\ttime_slot\x18\x05 \x01(\tR\btimeSlot\x12\x18\n" +
 	"\acomment\x18\x06 \x01(\tR\acomment\".\n" +
 	"\x13ListBookingsRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"G\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\".\n" +
+	"\x16ListAllBookingsRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\"D\n" +
+	"\x1aUpdateBookingStatusRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\"G\n" +
 	"\x14ListBookingsResponse\x12/\n" +
-	"\bbookings\x18\x01 \x03(\v2\x13.booking.v1.BookingR\bbookings2\xab\x01\n" +
+	"\bbookings\x18\x01 \x03(\v2\x13.booking.v1.BookingR\bbookings2\xd8\x02\n" +
 	"\x0eBookingService\x12F\n" +
 	"\rCreateBooking\x12 .booking.v1.CreateBookingRequest\x1a\x13.booking.v1.Booking\x12Q\n" +
-	"\fListBookings\x12\x1f.booking.v1.ListBookingsRequest\x1a .booking.v1.ListBookingsResponseB2Z0tea-platform/internal/genpb/booking/v1;bookingv1b\x06proto3"
+	"\fListBookings\x12\x1f.booking.v1.ListBookingsRequest\x1a .booking.v1.ListBookingsResponse\x12W\n" +
+	"\x0fListAllBookings\x12\".booking.v1.ListAllBookingsRequest\x1a .booking.v1.ListBookingsResponse\x12R\n" +
+	"\x13UpdateBookingStatus\x12&.booking.v1.UpdateBookingStatusRequest\x1a\x13.booking.v1.BookingB2Z0tea-platform/internal/genpb/booking/v1;bookingv1b\x06proto3"
 
 var (
 	file_booking_v1_booking_proto_rawDescOnce sync.Once
@@ -345,21 +448,27 @@ func file_booking_v1_booking_proto_rawDescGZIP() []byte {
 	return file_booking_v1_booking_proto_rawDescData
 }
 
-var file_booking_v1_booking_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_booking_v1_booking_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_booking_v1_booking_proto_goTypes = []any{
-	(*Booking)(nil),              // 0: booking.v1.Booking
-	(*CreateBookingRequest)(nil), // 1: booking.v1.CreateBookingRequest
-	(*ListBookingsRequest)(nil),  // 2: booking.v1.ListBookingsRequest
-	(*ListBookingsResponse)(nil), // 3: booking.v1.ListBookingsResponse
+	(*Booking)(nil),                    // 0: booking.v1.Booking
+	(*CreateBookingRequest)(nil),       // 1: booking.v1.CreateBookingRequest
+	(*ListBookingsRequest)(nil),        // 2: booking.v1.ListBookingsRequest
+	(*ListAllBookingsRequest)(nil),     // 3: booking.v1.ListAllBookingsRequest
+	(*UpdateBookingStatusRequest)(nil), // 4: booking.v1.UpdateBookingStatusRequest
+	(*ListBookingsResponse)(nil),       // 5: booking.v1.ListBookingsResponse
 }
 var file_booking_v1_booking_proto_depIdxs = []int32{
 	0, // 0: booking.v1.ListBookingsResponse.bookings:type_name -> booking.v1.Booking
 	1, // 1: booking.v1.BookingService.CreateBooking:input_type -> booking.v1.CreateBookingRequest
 	2, // 2: booking.v1.BookingService.ListBookings:input_type -> booking.v1.ListBookingsRequest
-	0, // 3: booking.v1.BookingService.CreateBooking:output_type -> booking.v1.Booking
-	3, // 4: booking.v1.BookingService.ListBookings:output_type -> booking.v1.ListBookingsResponse
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
+	3, // 3: booking.v1.BookingService.ListAllBookings:input_type -> booking.v1.ListAllBookingsRequest
+	4, // 4: booking.v1.BookingService.UpdateBookingStatus:input_type -> booking.v1.UpdateBookingStatusRequest
+	0, // 5: booking.v1.BookingService.CreateBooking:output_type -> booking.v1.Booking
+	5, // 6: booking.v1.BookingService.ListBookings:output_type -> booking.v1.ListBookingsResponse
+	5, // 7: booking.v1.BookingService.ListAllBookings:output_type -> booking.v1.ListBookingsResponse
+	0, // 8: booking.v1.BookingService.UpdateBookingStatus:output_type -> booking.v1.Booking
+	5, // [5:9] is the sub-list for method output_type
+	1, // [1:5] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -376,7 +485,7 @@ func file_booking_v1_booking_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_booking_v1_booking_proto_rawDesc), len(file_booking_v1_booking_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

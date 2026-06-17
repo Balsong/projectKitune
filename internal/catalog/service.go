@@ -80,6 +80,44 @@ func (s *Service) GetProduct(
 	return &catalogv1.GetProductResponse{Product: product.toProto()}, nil
 }
 
+// UpdateProduct меняет цену и доступность позиции (админка) и сбрасывает кэш.
+func (s *Service) UpdateProduct(
+	ctx context.Context,
+	req *catalogv1.UpdateProductRequest,
+) (*catalogv1.Product, error) {
+	if req.GetId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	if req.GetPriceCents() < 0 {
+		return nil, status.Error(codes.InvalidArgument, "price_cents must be >= 0")
+	}
+
+	product, err := s.repo.Update(ctx, req.GetId(), req.GetPriceCents(), req.GetAvailable())
+	if errors.Is(err, ErrNotFound) {
+		return nil, status.Errorf(codes.NotFound, "product %s not found", req.GetId())
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "update product: %v", err)
+	}
+
+	s.invalidateLists(ctx)
+	return product.toProto(), nil
+}
+
+// invalidateLists сбрасывает кэш списков каталога (best-effort).
+func (s *Service) invalidateLists(ctx context.Context) {
+	keys, err := s.cache.Keys(ctx, "catalog:list:*").Result()
+	if err != nil {
+		s.log.Warn("cache keys failed", "error", err)
+		return
+	}
+	if len(keys) > 0 {
+		if err := s.cache.Del(ctx, keys...).Err(); err != nil {
+			s.log.Warn("cache del failed", "error", err)
+		}
+	}
+}
+
 // cacheGet читает список из Redis. Возвращает ok=false при промахе или ошибке
 // (кэш — best-effort, ошибки не фатальны).
 func (s *Service) cacheGet(ctx context.Context, key string) ([]Product, bool) {

@@ -39,6 +39,7 @@ type userDTO struct {
 	Email     string `json:"email"`
 	Name      string `json:"name"`
 	Phone     string `json:"phone"`
+	Role      string `json:"role"`
 	CreatedAt string `json:"created_at"`
 }
 
@@ -48,6 +49,7 @@ func toUserDTO(u *accountv1.User) userDTO {
 		Email:     u.GetEmail(),
 		Name:      u.GetName(),
 		Phone:     u.GetPhone(),
+		Role:      u.GetRole(),
 		CreatedAt: u.GetCreatedAt(),
 	}
 }

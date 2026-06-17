@@ -15,6 +15,9 @@ service OrderService {
 
   // ListOrders возвращает заказы пользователя (история кабинета).
   rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
+
+  // ListAllOrders возвращает все заказы (админка).
+  rpc ListAllOrders(ListAllOrdersRequest) returns (ListOrdersResponse);
 }
 
 // FulfillmentType — способ получения заказа.
@@ -74,6 +77,10 @@ message GetOrderRequest {
 message ListOrdersRequest {
   string user_id = 1;
   int32 limit = 2; // 0 → дефолт (50)
+}
+
+message ListAllOrdersRequest {
+  int32 limit = 1; // 0 → дефолт (100)
 }
 
 message ListOrdersResponse {

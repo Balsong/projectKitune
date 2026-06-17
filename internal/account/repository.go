@@ -24,6 +24,7 @@ type User struct {
 	Email     string
 	Name      string
 	Phone     string
+	Role      string
 	CreatedAt time.Time
 }
 
@@ -49,10 +50,10 @@ func (r *Repository) Create(ctx context.Context, email, passwordHash, name, phon
 	const q = `
 		INSERT INTO users (email, password_hash, name, phone, consent_personal_data, consent_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, email, name, phone, created_at`
+		RETURNING id, email, name, phone, role, created_at`
 	var u User
 	err := r.pool.QueryRow(ctx, q, email, passwordHash, name, phone, consent, consentAt).
-		Scan(&u.ID, &u.Email, &u.Name, &u.Phone, &u.CreatedAt)
+		Scan(&u.ID, &u.Email, &u.Name, &u.Phone, &u.Role, &u.CreatedAt)
 	if isUniqueViolation(err) {
 		return nil, ErrEmailTaken
 	}
@@ -66,11 +67,11 @@ func (r *Repository) Create(ctx context.Context, email, passwordHash, name, phon
 func (r *Repository) Credentials(ctx context.Context, email string) (passwordHash string, u *User, err error) {
 	email = strings.TrimSpace(strings.ToLower(email))
 	const q = `
-		SELECT id, email, name, phone, created_at, password_hash
+		SELECT id, email, name, phone, role, created_at, password_hash
 		FROM users WHERE lower(email) = $1`
 	var usr User
 	err = r.pool.QueryRow(ctx, q, email).
-		Scan(&usr.ID, &usr.Email, &usr.Name, &usr.Phone, &usr.CreatedAt, &passwordHash)
+		Scan(&usr.ID, &usr.Email, &usr.Name, &usr.Phone, &usr.Role, &usr.CreatedAt, &passwordHash)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", nil, ErrNotFound
 	}
@@ -82,9 +83,9 @@ func (r *Repository) Credentials(ctx context.Context, email string) (passwordHas
 
 // GetByID возвращает пользователя по id (для валидации сессии).
 func (r *Repository) GetByID(ctx context.Context, id string) (*User, error) {
-	const q = `SELECT id, email, name, phone, created_at FROM users WHERE id = $1`
+	const q = `SELECT id, email, name, phone, role, created_at FROM users WHERE id = $1`
 	var u User
-	err := r.pool.QueryRow(ctx, q, id).Scan(&u.ID, &u.Email, &u.Name, &u.Phone, &u.CreatedAt)
+	err := r.pool.QueryRow(ctx, q, id).Scan(&u.ID, &u.Email, &u.Name, &u.Phone, &u.Role, &u.CreatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -92,6 +93,20 @@ func (r *Repository) GetByID(ctx context.Context, id string) (*User, error) {
 		return nil, err
 	}
 	return &u, nil
+}
+
+// PromoteAdmins назначает роль 'admin' пользователям с указанными e-mail.
+// Вызывается на старте сервиса для бутстрапа админов из ADMIN_EMAILS.
+func (r *Repository) PromoteAdmins(ctx context.Context, emails []string) error {
+	if len(emails) == 0 {
+		return nil
+	}
+	for i, e := range emails {
+		emails[i] = strings.TrimSpace(strings.ToLower(e))
+	}
+	const q = `UPDATE users SET role = 'admin' WHERE lower(email) = ANY($1)`
+	_, err := r.pool.Exec(ctx, q, emails)
+	return err
 }
 
 // isUniqueViolation распознаёт ошибку нарушения уникальности (код 23505).

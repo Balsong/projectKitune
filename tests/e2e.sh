@@ -225,6 +225,47 @@ hc=$(code "$BASE/api/v1/auth/me" -H "Authorization: Bearer $ATOKEN")
 # страницы входа/регистрации отдаются
 for p in /login.html /register.html; do page "$p"; done
 
+# ---------- 9. админка ----------
+sect "9 · Админ-панель (/api/v1/admin)"
+# админ из ADMIN_EMAILS (compose: admin@kitsune.tea). Регистрируем (или входим).
+ADMIN_EMAIL="admin@kitsune.tea"; ADMIN_PASS="admin123"
+curl -s -X POST -H "Content-Type: application/json" \
+  -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASS\",\"name\":\"Admin\",\"consent_personal_data\":true}" \
+  "$BASE/api/v1/auth/register" >/dev/null
+ADM=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASS\"}" "$BASE/api/v1/auth/login")
+ADMTOKEN=$(jget "$ADM" "d.get('session_token','')")
+[ "$(jget "$ADM" "d['user'].get('role','')")" = "admin" ] && ok "пользователь из ADMIN_EMAILS получает роль admin" || bad "роль admin не назначена" "$ADM"
+
+# обычный (не админ) пользователь для проверки 403
+UEMAIL="e2e-user-$$-$RANDOM@kitsune.tea"
+UREG=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$UEMAIL\",\"password\":\"secret123\",\"consent_personal_data\":true}" "$BASE/api/v1/auth/register")
+UTOKEN=$(jget "$UREG" "d.get('session_token','')")
+
+# доступ к ручкам админки
+[ "$(code "$BASE/api/v1/admin/orders")" = "401" ] && ok "/admin/orders без токена → 401" || bad "/admin/orders без токена не 401"
+UC=$(code "$BASE/api/v1/admin/orders" -H "Authorization: Bearer $UTOKEN")
+[ "$UC" = "403" ] && ok "/admin/orders под обычным пользователем → 403" || bad "/admin/orders под user не 403" "got=$UC"
+AO=$(curl -s "$BASE/api/v1/admin/orders" -H "Authorization: Bearer $ADMTOKEN")
+[ "$(jget "$AO" "isinstance(d,list)")" = "True" ] && ok "/admin/orders под админом → список заказов" || bad "/admin/orders под админом не список" "$AO"
+AB=$(curl -s "$BASE/api/v1/admin/bookings" -H "Authorization: Bearer $ADMTOKEN")
+[ "$(jget "$AB" "isinstance(d,list)")" = "True" ] && ok "/admin/bookings под админом → список броней" || bad "/admin/bookings под админом не список" "$AB"
+
+# смена статуса брони (используем BID из раздела 7)
+if [ -n "${BID:-}" ] && [ "$BID" != "__ERR__" ]; then
+  UB=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $ADMTOKEN" -d '{"status":"confirmed"}' "$BASE/api/v1/admin/bookings/$BID/status")
+  [ "$(jget "$UB" "d.get('status')")" = "confirmed" ] && ok "админ подтверждает бронь (confirmed)" || bad "смена статуса брони не сработала" "$UB"
+fi
+
+# редактирование позиции меню (цена не меняется, доступность включена)
+TPRICE=$(jget "$MENU" "[x['price_cents'] for x in d if x['id']=='$TEA_ID'][0]")
+UP=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $ADMTOKEN" -d "{\"price_cents\":$TPRICE,\"available\":true}" "$BASE/api/v1/admin/menu/$TEA_ID")
+[ "$(jget "$UP" "d.get('available')")" = "True" ] && ok "админ редактирует позицию меню (UpdateProduct)" || bad "обновление позиции не сработало" "$UP"
+# изменение видно в публичном меню
+[ "$(jget "$(curl -s "$BASE/api/v1/menu")" "[x['available'] for x in d if x['id']=='$TEA_ID'][0]")" = "True" ] && ok "изменение меню видно публично (кэш сброшен)" || bad "изменение меню не отразилось в /menu"
+
+# страница админки отдаётся
+page "/admin.html"
+
 # ---------- итог ----------
 printf "\n${c_bold}Итого:${c_off} ${c_green}%d прошло${c_off}, " "$PASS"
 if [ "$FAIL" -eq 0 ]; then

@@ -19,6 +19,7 @@ message User {
   string name = 3;
   string phone = 4;
   string created_at = 5; // RFC3339
+  string role = 6;       // "user" | "admin"
 }
 
 message RegisterRequest {

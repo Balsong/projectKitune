@@ -25,14 +25,35 @@ func sessionKey(token string) string { return "session:" + token }
 type Service struct {
 	accountv1.UnimplementedAccountServiceServer
 
-	repo *Repository
-	rdb  *redis.Client
-	log  *slog.Logger
+	repo        *Repository
+	rdb         *redis.Client
+	log         *slog.Logger
+	adminEmails map[string]bool // e-mail с ролью admin (из ADMIN_EMAILS)
 }
 
-// NewService собирает сервис аккаунтов.
-func NewService(repo *Repository, rdb *redis.Client, log *slog.Logger) *Service {
-	return &Service{repo: repo, rdb: rdb, log: log}
+// NewService собирает сервис аккаунтов. adminEmails — e-mail, которым при
+// регистрации/входе назначается роль admin (бутстрап админки).
+func NewService(repo *Repository, rdb *redis.Client, log *slog.Logger, adminEmails []string) *Service {
+	set := make(map[string]bool, len(adminEmails))
+	for _, e := range adminEmails {
+		e = strings.TrimSpace(strings.ToLower(e))
+		if e != "" {
+			set[e] = true
+		}
+	}
+	return &Service{repo: repo, rdb: rdb, log: log, adminEmails: set}
+}
+
+// ensureAdmin назначает роль admin, если e-mail входит в список админов.
+func (s *Service) ensureAdmin(ctx context.Context, u *User) {
+	if u == nil || u.Role == "admin" || !s.adminEmails[strings.ToLower(u.Email)] {
+		return
+	}
+	if err := s.repo.PromoteAdmins(ctx, []string{u.Email}); err != nil {
+		s.log.Warn("не удалось назначить admin", "email", u.Email, "error", err)
+		return
+	}
+	u.Role = "admin"
 }
 
 // Register регистрирует пользователя и сразу открывает сессию.
@@ -61,6 +82,7 @@ func (s *Service) Register(ctx context.Context, req *accountv1.RegisterRequest) 
 		return nil, status.Errorf(codes.Internal, "create user: %v", err)
 	}
 
+	s.ensureAdmin(ctx, u)
 	token, err := s.openSession(ctx, u.ID)
 	if err != nil {
 		return nil, err
@@ -82,6 +104,7 @@ func (s *Service) Login(ctx context.Context, req *accountv1.LoginRequest) (*acco
 		return nil, status.Error(codes.Unauthenticated, "неверный e-mail или пароль")
 	}
 
+	s.ensureAdmin(ctx, u)
 	token, err := s.openSession(ctx, u.ID)
 	if err != nil {
 		return nil, err
@@ -129,12 +152,22 @@ func (s *Service) openSession(ctx context.Context, userID string) (string, error
 	return token, nil
 }
 
+// PromoteAdmins назначает роль admin по списку e-mail (бутстрап из окружения).
+func (s *Service) PromoteAdmins(ctx context.Context, emails []string) error {
+	return s.repo.PromoteAdmins(ctx, emails)
+}
+
 func toProto(u *User) *accountv1.User {
+	role := u.Role
+	if role == "" {
+		role = "user"
+	}
 	return &accountv1.User{
 		Id:        u.ID,
 		Email:     u.Email,
 		Name:      u.Name,
 		Phone:     u.Phone,
+		Role:      role,
 		CreatedAt: u.CreatedAt.UTC().Format(time.RFC3339),
 	}
 }

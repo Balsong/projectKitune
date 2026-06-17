@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	OrderService_CreateOrder_FullMethodName = "/order.v1.OrderService/CreateOrder"
-	OrderService_GetOrder_FullMethodName    = "/order.v1.OrderService/GetOrder"
-	OrderService_ListOrders_FullMethodName  = "/order.v1.OrderService/ListOrders"
+	OrderService_CreateOrder_FullMethodName   = "/order.v1.OrderService/CreateOrder"
+	OrderService_GetOrder_FullMethodName      = "/order.v1.OrderService/GetOrder"
+	OrderService_ListOrders_FullMethodName    = "/order.v1.OrderService/ListOrders"
+	OrderService_ListAllOrders_FullMethodName = "/order.v1.OrderService/ListAllOrders"
 )
 
 // OrderServiceClient is the client API for OrderService service.
@@ -37,6 +38,8 @@ type OrderServiceClient interface {
 	GetOrder(ctx context.Context, in *GetOrderRequest, opts ...grpc.CallOption) (*Order, error)
 	// ListOrders возвращает заказы пользователя (история кабинета).
 	ListOrders(ctx context.Context, in *ListOrdersRequest, opts ...grpc.CallOption) (*ListOrdersResponse, error)
+	// ListAllOrders возвращает все заказы (админка).
+	ListAllOrders(ctx context.Context, in *ListAllOrdersRequest, opts ...grpc.CallOption) (*ListOrdersResponse, error)
 }
 
 type orderServiceClient struct {
@@ -77,6 +80,16 @@ func (c *orderServiceClient) ListOrders(ctx context.Context, in *ListOrdersReque
 	return out, nil
 }
 
+func (c *orderServiceClient) ListAllOrders(ctx context.Context, in *ListAllOrdersRequest, opts ...grpc.CallOption) (*ListOrdersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListOrdersResponse)
+	err := c.cc.Invoke(ctx, OrderService_ListAllOrders_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrderServiceServer is the server API for OrderService service.
 // All implementations must embed UnimplementedOrderServiceServer
 // for forward compatibility.
@@ -90,6 +103,8 @@ type OrderServiceServer interface {
 	GetOrder(context.Context, *GetOrderRequest) (*Order, error)
 	// ListOrders возвращает заказы пользователя (история кабинета).
 	ListOrders(context.Context, *ListOrdersRequest) (*ListOrdersResponse, error)
+	// ListAllOrders возвращает все заказы (админка).
+	ListAllOrders(context.Context, *ListAllOrdersRequest) (*ListOrdersResponse, error)
 	mustEmbedUnimplementedOrderServiceServer()
 }
 
@@ -108,6 +123,9 @@ func (UnimplementedOrderServiceServer) GetOrder(context.Context, *GetOrderReques
 }
 func (UnimplementedOrderServiceServer) ListOrders(context.Context, *ListOrdersRequest) (*ListOrdersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListOrders not implemented")
+}
+func (UnimplementedOrderServiceServer) ListAllOrders(context.Context, *ListAllOrdersRequest) (*ListOrdersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAllOrders not implemented")
 }
 func (UnimplementedOrderServiceServer) mustEmbedUnimplementedOrderServiceServer() {}
 func (UnimplementedOrderServiceServer) testEmbeddedByValue()                      {}
@@ -184,6 +202,24 @@ func _OrderService_ListOrders_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderService_ListAllOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAllOrdersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).ListAllOrders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_ListAllOrders_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).ListAllOrders(ctx, req.(*ListAllOrdersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrderService_ServiceDesc is the grpc.ServiceDesc for OrderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -202,6 +238,10 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListOrders",
 			Handler:    _OrderService_ListOrders_Handler,
+		},
+		{
+			MethodName: "ListAllOrders",
+			Handler:    _OrderService_ListAllOrders_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

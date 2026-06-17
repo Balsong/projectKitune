@@ -25,6 +25,7 @@ type Config struct {
 	DBName       string
 	KafkaBrokers string
 	RedisAddr    string
+	AdminEmails  string // список e-mail админов через запятую (бутстрап роли)
 
 	// PaymentLimitCents — порог mock-оплаты: заказы дороже отклоняются
 	// («превышен лимит карты»). Позволяет демонстрировать компенсацию саги.
@@ -50,6 +51,7 @@ func Load() *Config {
 		DBName:       getEnv("DB_NAME", "tea_platform"),
 		KafkaBrokers: getEnv("KAFKA_BROKERS", "kafka:9092"),
 		RedisAddr:    getEnv("REDIS_ADDR", "redis:6379"),
+		AdminEmails:  getEnv("ADMIN_EMAILS", ""),
 
 		PaymentLimitCents: getEnvInt64("PAYMENT_LIMIT_CENTS", 1_000_000), // 10 000 ₽
 	}

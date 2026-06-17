@@ -104,6 +104,7 @@ services:
       DB_PASSWORD: dev
       DB_NAME: tea_platform
       REDIS_ADDR: redis:6379
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-admin@kitsune.tea}
     ports:
       - "9094:9094"
     depends_on:

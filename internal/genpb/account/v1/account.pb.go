@@ -28,6 +28,7 @@ type User struct {
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Phone         string                 `protobuf:"bytes,4,opt,name=phone,proto3" json:"phone,omitempty"`
 	CreatedAt     string                 `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"` // RFC3339
+	Role          string                 `protobuf:"bytes,6,opt,name=role,proto3" json:"role,omitempty"`                            // "user" | "admin"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -93,6 +94,13 @@ func (x *User) GetPhone() string {
 func (x *User) GetCreatedAt() string {
 	if x != nil {
 		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *User) GetRole() string {
+	if x != nil {
+		return x.Role
 	}
 	return ""
 }
@@ -370,14 +378,15 @@ var File_account_v1_account_proto protoreflect.FileDescriptor
 const file_account_v1_account_proto_rawDesc = "" +
 	"\n" +
 	"\x18account/v1/account.proto\x12\n" +
-	"account.v1\"u\n" +
+	"account.v1\"\x89\x01\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x14\n" +
 	"\x05phone\x18\x04 \x01(\tR\x05phone\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\tR\tcreatedAt\"\xa1\x01\n" +
+	"created_at\x18\x05 \x01(\tR\tcreatedAt\x12\x12\n" +
+	"\x04role\x18\x06 \x01(\tR\x04role\"\xa1\x01\n" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x12\n" +

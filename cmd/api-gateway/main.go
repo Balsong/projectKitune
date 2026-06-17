@@ -120,6 +120,12 @@ func main() {
 	mux.HandleFunc("GET /api/v1/orders/{id}", handleGetOrder(log, orderClient))
 	mux.HandleFunc("GET /api/v1/orders/{id}/delivery", handleGetDelivery(log, deliveryClient))
 
+	// Админка (требует роль admin; проверка внутри хендлеров).
+	mux.HandleFunc("GET /api/v1/admin/orders", handleAdminOrders(log, accountClient, orderClient))
+	mux.HandleFunc("GET /api/v1/admin/bookings", handleAdminBookings(log, accountClient, bookingClient))
+	mux.HandleFunc("POST /api/v1/admin/bookings/{id}/status", handleAdminUpdateBooking(log, accountClient, bookingClient))
+	mux.HandleFunc("POST /api/v1/admin/menu/{id}", handleAdminUpdateProduct(log, accountClient, catalogClient))
+
 	// Аккаунт: регистрация, вход, текущий пользователь, выход.
 	mux.HandleFunc("POST /api/v1/auth/register", handleRegister(log, accountClient))
 	mux.HandleFunc("POST /api/v1/auth/login", handleLogin(log, accountClient))

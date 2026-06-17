@@ -19,8 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BookingService_CreateBooking_FullMethodName = "/booking.v1.BookingService/CreateBooking"
-	BookingService_ListBookings_FullMethodName  = "/booking.v1.BookingService/ListBookings"
+	BookingService_CreateBooking_FullMethodName       = "/booking.v1.BookingService/CreateBooking"
+	BookingService_ListBookings_FullMethodName        = "/booking.v1.BookingService/ListBookings"
+	BookingService_ListAllBookings_FullMethodName     = "/booking.v1.BookingService/ListAllBookings"
+	BookingService_UpdateBookingStatus_FullMethodName = "/booking.v1.BookingService/UpdateBookingStatus"
 )
 
 // BookingServiceClient is the client API for BookingService service.
@@ -32,6 +34,10 @@ const (
 type BookingServiceClient interface {
 	CreateBooking(ctx context.Context, in *CreateBookingRequest, opts ...grpc.CallOption) (*Booking, error)
 	ListBookings(ctx context.Context, in *ListBookingsRequest, opts ...grpc.CallOption) (*ListBookingsResponse, error)
+	// ListAllBookings возвращает все брони (админка).
+	ListAllBookings(ctx context.Context, in *ListAllBookingsRequest, opts ...grpc.CallOption) (*ListBookingsResponse, error)
+	// UpdateBookingStatus меняет статус брони (админка).
+	UpdateBookingStatus(ctx context.Context, in *UpdateBookingStatusRequest, opts ...grpc.CallOption) (*Booking, error)
 }
 
 type bookingServiceClient struct {
@@ -62,6 +68,26 @@ func (c *bookingServiceClient) ListBookings(ctx context.Context, in *ListBooking
 	return out, nil
 }
 
+func (c *bookingServiceClient) ListAllBookings(ctx context.Context, in *ListAllBookingsRequest, opts ...grpc.CallOption) (*ListBookingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListBookingsResponse)
+	err := c.cc.Invoke(ctx, BookingService_ListAllBookings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookingServiceClient) UpdateBookingStatus(ctx context.Context, in *UpdateBookingStatusRequest, opts ...grpc.CallOption) (*Booking, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Booking)
+	err := c.cc.Invoke(ctx, BookingService_UpdateBookingStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BookingServiceServer is the server API for BookingService service.
 // All implementations must embed UnimplementedBookingServiceServer
 // for forward compatibility.
@@ -71,6 +97,10 @@ func (c *bookingServiceClient) ListBookings(ctx context.Context, in *ListBooking
 type BookingServiceServer interface {
 	CreateBooking(context.Context, *CreateBookingRequest) (*Booking, error)
 	ListBookings(context.Context, *ListBookingsRequest) (*ListBookingsResponse, error)
+	// ListAllBookings возвращает все брони (админка).
+	ListAllBookings(context.Context, *ListAllBookingsRequest) (*ListBookingsResponse, error)
+	// UpdateBookingStatus меняет статус брони (админка).
+	UpdateBookingStatus(context.Context, *UpdateBookingStatusRequest) (*Booking, error)
 	mustEmbedUnimplementedBookingServiceServer()
 }
 
@@ -86,6 +116,12 @@ func (UnimplementedBookingServiceServer) CreateBooking(context.Context, *CreateB
 }
 func (UnimplementedBookingServiceServer) ListBookings(context.Context, *ListBookingsRequest) (*ListBookingsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListBookings not implemented")
+}
+func (UnimplementedBookingServiceServer) ListAllBookings(context.Context, *ListAllBookingsRequest) (*ListBookingsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAllBookings not implemented")
+}
+func (UnimplementedBookingServiceServer) UpdateBookingStatus(context.Context, *UpdateBookingStatusRequest) (*Booking, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateBookingStatus not implemented")
 }
 func (UnimplementedBookingServiceServer) mustEmbedUnimplementedBookingServiceServer() {}
 func (UnimplementedBookingServiceServer) testEmbeddedByValue()                        {}
@@ -144,6 +180,42 @@ func _BookingService_ListBookings_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BookingService_ListAllBookings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAllBookingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServiceServer).ListAllBookings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BookingService_ListAllBookings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServiceServer).ListAllBookings(ctx, req.(*ListAllBookingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BookingService_UpdateBookingStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateBookingStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServiceServer).UpdateBookingStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BookingService_UpdateBookingStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServiceServer).UpdateBookingStatus(ctx, req.(*UpdateBookingStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BookingService_ServiceDesc is the grpc.ServiceDesc for BookingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -158,6 +230,14 @@ var BookingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListBookings",
 			Handler:    _BookingService_ListBookings_Handler,
+		},
+		{
+			MethodName: "ListAllBookings",
+			Handler:    _BookingService_ListAllBookings_Handler,
+		},
+		{
+			MethodName: "UpdateBookingStatus",
+			Handler:    _BookingService_UpdateBookingStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

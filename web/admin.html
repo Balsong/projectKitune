@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ-панель — КИЦУНЭ</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Lora:wght@500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/kitsune.css">
+</head>
+<body>
+
+<div class="utility">
+  <div class="container">
+    <span class="utility__hours">Панель управления · КИЦУНЭ</span>
+    <div class="utility__right">
+      <a href="index.html">На сайт</a>
+      <a href="account.html">Личный кабинет</a>
+    </div>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="container nav">
+    <a class="brand" href="index.html" aria-label="КИЦУНЭ — на главную">
+      <img class="brand__logo" src="assets/logo.svg" alt="КИЦУНЭ — Дом чая" width="46" height="46">
+      <span class="brand__name">КИЦУНЭ<small>АДМИН-ПАНЕЛЬ</small></span>
+    </a>
+    <nav class="nav__links" aria-label="Основная навигация">
+      <a href="menu-tea.html">Чайная карта</a>
+      <a href="menu-kitchen.html">Напитки</a>
+      <a href="account.html">Кабинет</a>
+    </nav>
+    <div class="nav__actions">
+      <button class="btn btn--ghost btn--sm" id="logout-btn">Выйти</button>
+    </div>
+  </div>
+</header>
+
+<section class="page-hero">
+  <div class="container">
+    <div class="crumbs reveal"><a href="index.html">Главная</a> &nbsp;/&nbsp; Админ-панель</div>
+    <h1 class="h2 reveal reveal-d1">Управление</h1>
+    <p class="lead reveal reveal-d2" id="admin-hello" style="margin-top:14px">Меню, заказы и брони.</p>
+  </div>
+</section>
+
+<!-- Гость / не админ -->
+<section class="section section--tight" id="gate" style="display:none">
+  <div class="container">
+    <div class="empty">
+      <div class="zh">禁</div>
+      <h3 class="h3" style="margin-top:8px" id="gate-title">Доступ только для администратора</h3>
+      <p class="muted" style="margin-bottom:22px" id="gate-text">Войдите под учётной записью администратора.</p>
+      <a class="btn btn--lg" href="login.html">Войти</a>
+    </div>
+  </div>
+</section>
+
+<!-- Панель -->
+<section class="section section--tight" id="panel" style="display:none">
+  <div class="container">
+    <div class="tagrow reveal" id="tabs" style="margin-bottom:28px">
+      <button class="chip is-active" data-tab="menu">Меню</button>
+      <button class="chip" data-tab="orders">Заказы</button>
+      <button class="chip" data-tab="bookings">Брони</button>
+    </div>
+
+    <!-- MENU -->
+    <div data-panel="menu">
+      <div class="card reveal" style="padding:0;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table class="admin-table" id="menu-table">
+            <thead><tr><th>Позиция</th><th>Категория</th><th>Цена, ₽</th><th>В наличии</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div data-panel="orders" style="display:none">
+      <div class="card reveal" style="padding:0;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table class="admin-table" id="orders-table">
+            <thead><tr><th>Заказ</th><th>Статус</th><th>Тип</th><th>Сумма, ₽</th><th>Адрес</th><th>Когда</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="muted" style="font-size:13px;margin-top:12px">Статусы заказов меняются автоматически сагой (оплата → готовка → доставка).</p>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div data-panel="bookings" style="display:none">
+      <div class="card reveal" style="padding:0;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table class="admin-table" id="bookings-table">
+            <thead><tr><th>Бронь</th><th>Гость</th><th>Телефон</th><th>Гостей</th><th>Время</th><th>Статус</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© 2024–2026 КИЦУНЭ · Дом чая. Панель управления.</span>
+      <span>Только для персонала</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .admin-table{width:100%;border-collapse:collapse;font-size:14.5px}
+  .admin-table th,.admin-table td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+  .admin-table th{font-family:var(--font-head);font-size:13px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}
+  .admin-table tbody tr:last-child td{border-bottom:none}
+  .admin-table input[type=number]{width:96px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;font:inherit}
+  .admin-table td.name{white-space:normal;max-width:280px;font-weight:600}
+</style>
+
+<script src="js/catalog.js"></script>
+<script src="js/kitsune.js"></script>
+<script>
+(async function(){
+  const rub = n => new Intl.NumberFormat('ru-RU').format(Math.round(n));
+  const gate = document.getElementById('gate'), panel = document.getElementById('panel');
+
+  const me = await KitsuneAuth.me();
+  if(!me){ gate.style.display=''; return; }
+  if(me.role !== 'admin'){
+    gate.style.display='';
+    document.getElementById('gate-title').textContent='Недостаточно прав';
+    document.getElementById('gate-text').textContent='Вы вошли как '+(me.email||'пользователь')+', но это не администратор.';
+    return;
+  }
+  panel.style.display='';
+  document.getElementById('admin-hello').textContent='Вы вошли как администратор · '+me.email;
+
+  document.getElementById('logout-btn').addEventListener('click', async ()=>{ await KitsuneAuth.logout(); location.href='login.html'; });
+
+  // вкладки
+  document.querySelectorAll('#tabs .chip').forEach(ch=>ch.addEventListener('click',()=>{
+    document.querySelectorAll('#tabs .chip').forEach(c=>c.classList.remove('is-active'));
+    ch.classList.add('is-active');
+    document.querySelectorAll('[data-panel]').forEach(p=>p.style.display='none');
+    document.querySelector('[data-panel="'+ch.dataset.tab+'"]').style.display='';
+  }));
+
+  /* ---------- МЕНЮ ---------- */
+  const menuBody = document.querySelector('#menu-table tbody');
+  async function loadMenu(){
+    let items=[]; try{ items=await KitsuneAPI.menu(); }catch(e){ items=[]; }
+    menuBody.innerHTML = items.map(p=>`
+      <tr data-id="${p.id}">
+        <td class="name">${p.name}<br><span class="muted" style="font-size:12px">${p.sku||''}</span></td>
+        <td class="muted">${p.category||''}</td>
+        <td><input type="number" min="0" step="1" value="${Math.round((p.price_cents||0)/100)}" data-price></td>
+        <td><label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" ${p.available?'checked':''} data-avail> <span class="muted" style="font-size:12px">в продаже</span></label></td>
+        <td><button class="btn btn--sm" data-save>Сохранить</button></td>
+      </tr>`).join('');
+  }
+  menuBody.addEventListener('click', async e=>{
+    const btn=e.target.closest('[data-save]'); if(!btn) return;
+    const tr=btn.closest('tr'); const id=tr.dataset.id;
+    const price=Math.max(0, parseInt(tr.querySelector('[data-price]').value,10)||0)*100;
+    const avail=tr.querySelector('[data-avail]').checked;
+    btn.disabled=true; btn.textContent='…';
+    try{
+      const r=await KitsuneAPI.adminUpdateProduct(id, price, avail);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      kitsuneToast('Позиция обновлена'); btn.textContent='Сохранено ✓';
+      setTimeout(()=>{ btn.textContent='Сохранить'; btn.disabled=false; }, 1200);
+    }catch(err){ kitsuneToast('Не удалось сохранить'); btn.textContent='Сохранить'; btn.disabled=false; }
+  });
+
+  /* ---------- ЗАКАЗЫ ---------- */
+  const OS={ORDER_STATUS_CREATED:'Создан',ORDER_STATUS_PAYMENT_PENDING:'Оплата',ORDER_STATUS_PAID:'Оплачен',ORDER_STATUS_CONFIRMED:'Готовится',ORDER_STATUS_COMPLETED:'Доставлен',ORDER_STATUS_CANCELLED:'Отменён',ORDER_STATUS_PAYMENT_FAILED:'Оплата отклонена'};
+  const FT={FULFILLMENT_TYPE_FOOD_COURIER:'Доставка еды',FULFILLMENT_TYPE_SHOP_DELIVERY:'Доставка чая',FULFILLMENT_TYPE_DINE_IN:'В зале'};
+  async function loadOrders(){
+    let list=[]; try{ list=await KitsuneAPI.adminOrders(); }catch(e){ list=[]; }
+    const body=document.querySelector('#orders-table tbody');
+    body.innerHTML = list.length ? list.map(o=>{
+      const d=new Date(o.created_at); const ds=isNaN(d)?'':d.toLocaleString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      return `<tr><td>KT-${(o.id||'').slice(0,8).toUpperCase()}</td><td>${OS[o.status]||o.status}</td><td>${FT[o.fulfillment_type]||''}</td><td>${rub((o.total_cents||0)/100)}</td><td class="muted">${o.address||'—'}</td><td class="muted">${ds}</td></tr>`;
+    }).join('') : '<tr><td colspan="6" class="muted" style="text-align:center;padding:28px">Заказов пока нет</td></tr>';
+  }
+
+  /* ---------- БРОНИ ---------- */
+  const BS={new:'Новая',confirmed:'Подтверждена',cancelled:'Отменена',done:'Завершена'};
+  const bookBody=document.querySelector('#bookings-table tbody');
+  async function loadBookings(){
+    let list=[]; try{ list=await KitsuneAPI.adminBookings(); }catch(e){ list=[]; }
+    bookBody.innerHTML = list.length ? list.map(b=>`
+      <tr data-id="${b.id}">
+        <td>KT-${(b.id||'').slice(0,8).toUpperCase()}</td>
+        <td class="name">${b.customer||'—'}${b.comment?'<br><span class="muted" style="font-size:12px">'+b.comment+'</span>':''}</td>
+        <td class="muted">${b.phone||'—'}</td>
+        <td>${b.guests||''}</td>
+        <td class="muted">${b.time_slot||''}</td>
+        <td><b data-status>${BS[b.status]||b.status}</b></td>
+        <td>
+          <button class="btn btn--sm" data-act="confirmed">Подтвердить</button>
+          <button class="btn btn--ghost btn--sm" data-act="cancelled">Отменить</button>
+        </td>
+      </tr>`).join('') : '<tr><td colspan="7" class="muted" style="text-align:center;padding:28px">Броней пока нет</td></tr>';
+  }
+  bookBody.addEventListener('click', async e=>{
+    const btn=e.target.closest('[data-act]'); if(!btn) return;
+    const tr=btn.closest('tr'); const id=tr.dataset.id; const status=btn.dataset.act;
+    btn.disabled=true;
+    try{
+      const r=await KitsuneAPI.adminBookingStatus(id, status);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const b=await r.json();
+      tr.querySelector('[data-status]').textContent=BS[b.status]||b.status;
+      kitsuneToast('Статус брони обновлён');
+    }catch(err){ kitsuneToast('Не удалось обновить'); }
+    btn.disabled=false;
+  });
+
+  loadMenu(); loadOrders(); loadBookings();
+})();
+</script>
+</body>
+</html>

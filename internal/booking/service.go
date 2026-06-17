@@ -4,10 +4,12 @@ package booking
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -112,4 +114,60 @@ func (s *Service) ListBookings(ctx context.Context, req *bookingv1.ListBookingsR
 		out = append(out, &b)
 	}
 	return &bookingv1.ListBookingsResponse{Bookings: out}, rows.Err()
+}
+
+// ListAllBookings возвращает все брони (админка), новые первыми.
+func (s *Service) ListAllBookings(ctx context.Context, req *bookingv1.ListAllBookingsRequest) (*bookingv1.ListBookingsResponse, error) {
+	limit := int(req.GetLimit())
+	if limit <= 0 || limit > 500 {
+		limit = 100
+	}
+	const q = `
+		SELECT id, user_id, customer, phone, guests, time_slot, comment, status, created_at
+		FROM bookings ORDER BY created_at DESC LIMIT $1`
+	rows, err := s.pool.Query(ctx, q, limit)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list all bookings: %v", err)
+	}
+	defer rows.Close()
+
+	var out []*bookingv1.Booking
+	for rows.Next() {
+		var b bookingv1.Booking
+		var createdAt time.Time
+		if err := rows.Scan(&b.Id, &b.UserId, &b.Customer, &b.Phone, &b.Guests,
+			&b.TimeSlot, &b.Comment, &b.Status, &createdAt); err != nil {
+			return nil, status.Errorf(codes.Internal, "scan booking: %v", err)
+		}
+		b.CreatedAt = createdAt.UTC().Format(time.RFC3339)
+		out = append(out, &b)
+	}
+	return &bookingv1.ListBookingsResponse{Bookings: out}, rows.Err()
+}
+
+// validBookingStatus — допустимые статусы для админского перехода.
+var validBookingStatus = map[string]bool{"new": true, "confirmed": true, "cancelled": true, "done": true}
+
+// UpdateBookingStatus меняет статус брони (админка).
+func (s *Service) UpdateBookingStatus(ctx context.Context, req *bookingv1.UpdateBookingStatusRequest) (*bookingv1.Booking, error) {
+	if req.GetId() == "" || !validBookingStatus[req.GetStatus()] {
+		return nil, status.Error(codes.InvalidArgument, "valid id and status are required")
+	}
+	const q = `
+		UPDATE bookings SET status = $2 WHERE id = $1
+		RETURNING id, user_id, customer, phone, guests, time_slot, comment, status, created_at`
+	var b bookingv1.Booking
+	var createdAt time.Time
+	err := s.pool.QueryRow(ctx, q, req.GetId(), req.GetStatus()).Scan(
+		&b.Id, &b.UserId, &b.Customer, &b.Phone, &b.Guests,
+		&b.TimeSlot, &b.Comment, &b.Status, &createdAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, status.Errorf(codes.NotFound, "booking %s not found", req.GetId())
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "update booking: %v", err)
+	}
+	b.CreatedAt = createdAt.UTC().Format(time.RFC3339)
+	s.log.Info("статус брони изменён", "booking_id", b.Id, "status", b.Status)
+	return &b, nil
 }

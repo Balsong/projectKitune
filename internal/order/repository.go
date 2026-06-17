@@ -155,6 +155,43 @@ func (r *Repository) ListByUser(ctx context.Context, userID string, limit int) (
 	return orders, nil
 }
 
+// ListAll возвращает все заказы (с позициями), новые первыми (админка).
+func (r *Repository) ListAll(ctx context.Context, limit int) ([]*Order, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 100
+	}
+	const q = `
+		SELECT id, user_id, cart_id, fulfillment_type, status, total_cents, currency, address, booking_id, created_at
+		FROM orders ORDER BY created_at DESC LIMIT $1`
+	rows, err := r.pool.Query(ctx, q, limit)
+	if err != nil {
+		return nil, fmt.Errorf("order: list all: %w", err)
+	}
+	defer rows.Close()
+
+	var orders []*Order
+	for rows.Next() {
+		var o Order
+		if err := rows.Scan(&o.ID, &o.UserID, &o.CartID, &o.FulfillmentType, &o.Status,
+			&o.TotalCents, &o.Currency, &o.Address, &o.BookingID, &o.CreatedAt); err != nil {
+			return nil, fmt.Errorf("order: scan order: %w", err)
+		}
+		orders = append(orders, &o)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for _, o := range orders {
+		items, err := r.loadItems(ctx, o.ID)
+		if err != nil {
+			return nil, err
+		}
+		o.Items = items
+	}
+	return orders, nil
+}
+
 // loadItems читает позиции заказа.
 func (r *Repository) loadItems(ctx context.Context, orderID string) ([]Item, error) {
 	const q = `

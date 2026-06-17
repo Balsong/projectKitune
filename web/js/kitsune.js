@@ -29,7 +29,12 @@
     getOrder: (id) => fetch("/api/v1/orders/"+id).then(r=>r.json()),
     getDelivery: (id) => fetch("/api/v1/orders/"+id+"/delivery").then(r=> r.ok ? r.json() : null),
     book: (b) => fetch("/api/v1/book", {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, Auth.headers()), body:JSON.stringify(b)}),
-    myBookings: () => fetch("/api/v1/bookings", {headers:Auth.headers()}).then(r=> r.ok ? r.json() : [])
+    myBookings: () => fetch("/api/v1/bookings", {headers:Auth.headers()}).then(r=> r.ok ? r.json() : []),
+    // admin
+    adminOrders:   () => fetch("/api/v1/admin/orders", {headers:Auth.headers()}).then(r=> r.ok ? r.json() : Promise.reject(r.status)),
+    adminBookings: () => fetch("/api/v1/admin/bookings", {headers:Auth.headers()}).then(r=> r.ok ? r.json() : Promise.reject(r.status)),
+    adminBookingStatus: (id,status) => fetch("/api/v1/admin/bookings/"+id+"/status", {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, Auth.headers()), body:JSON.stringify({status})}),
+    adminUpdateProduct: (id,price_cents,available) => fetch("/api/v1/admin/menu/"+id, {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, Auth.headers()), body:JSON.stringify({price_cents,available})})
   };
   window.KitsuneAPI = API;
   window.kitsuneResetCart = () => localStorage.setItem(CARTID_KEY, crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));

@@ -9,6 +9,12 @@ option go_package = "tea-platform/internal/genpb/booking/v1;bookingv1";
 service BookingService {
   rpc CreateBooking(CreateBookingRequest) returns (Booking);
   rpc ListBookings(ListBookingsRequest) returns (ListBookingsResponse);
+
+  // ListAllBookings возвращает все брони (админка).
+  rpc ListAllBookings(ListAllBookingsRequest) returns (ListBookingsResponse);
+
+  // UpdateBookingStatus меняет статус брони (админка).
+  rpc UpdateBookingStatus(UpdateBookingStatusRequest) returns (Booking);
 }
 
 message Booking {
@@ -34,6 +40,15 @@ message CreateBookingRequest {
 
 message ListBookingsRequest {
   string user_id = 1;
+}
+
+message ListAllBookingsRequest {
+  int32 limit = 1; // 0 → дефолт (100)
+}
+
+message UpdateBookingStatusRequest {
+  string id = 1;
+  string status = 2; // confirmed | cancelled | done
 }
 
 message ListBookingsResponse {

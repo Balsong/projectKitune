@@ -110,6 +110,19 @@ func (s *Service) ListOrders(ctx context.Context, req *orderv1.ListOrdersRequest
 	return &orderv1.ListOrdersResponse{Orders: out}, nil
 }
 
+// ListAllOrders возвращает все заказы (админка).
+func (s *Service) ListAllOrders(ctx context.Context, req *orderv1.ListAllOrdersRequest) (*orderv1.ListOrdersResponse, error) {
+	orders, err := s.repo.ListAll(ctx, int(req.GetLimit()))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list all orders: %v", err)
+	}
+	out := make([]*orderv1.Order, 0, len(orders))
+	for _, o := range orders {
+		out = append(out, o.toProto())
+	}
+	return &orderv1.ListOrdersResponse{Orders: out}, nil
+}
+
 // GetOrder возвращает заказ по идентификатору.
 func (s *Service) GetOrder(ctx context.Context, req *orderv1.GetOrderRequest) (*orderv1.Order, error) {
 	if req.GetId() == "" {

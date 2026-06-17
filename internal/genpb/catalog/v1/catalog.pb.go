@@ -382,6 +382,66 @@ func (x *GetProductResponse) GetProduct() *Product {
 	return nil
 }
 
+type UpdateProductRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	PriceCents    int64                  `protobuf:"varint,2,opt,name=price_cents,json=priceCents,proto3" json:"price_cents,omitempty"`
+	Available     bool                   `protobuf:"varint,3,opt,name=available,proto3" json:"available,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateProductRequest) Reset() {
+	*x = UpdateProductRequest{}
+	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateProductRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateProductRequest) ProtoMessage() {}
+
+func (x *UpdateProductRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_catalog_v1_catalog_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateProductRequest.ProtoReflect.Descriptor instead.
+func (*UpdateProductRequest) Descriptor() ([]byte, []int) {
+	return file_catalog_v1_catalog_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *UpdateProductRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *UpdateProductRequest) GetPriceCents() int64 {
+	if x != nil {
+		return x.PriceCents
+	}
+	return 0
+}
+
+func (x *UpdateProductRequest) GetAvailable() bool {
+	if x != nil {
+		return x.Available
+	}
+	return false
+}
+
 var File_catalog_v1_catalog_proto protoreflect.FileDescriptor
 
 const file_catalog_v1_catalog_proto_rawDesc = "" +
@@ -410,15 +470,21 @@ const file_catalog_v1_catalog_proto_rawDesc = "" +
 	"\x11GetProductRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"C\n" +
 	"\x12GetProductResponse\x12-\n" +
-	"\aproduct\x18\x01 \x01(\v2\x13.catalog.v1.ProductR\aproduct*^\n" +
+	"\aproduct\x18\x01 \x01(\v2\x13.catalog.v1.ProductR\aproduct\"e\n" +
+	"\x14UpdateProductRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
+	"\vprice_cents\x18\x02 \x01(\x03R\n" +
+	"priceCents\x12\x1c\n" +
+	"\tavailable\x18\x03 \x01(\bR\tavailable*^\n" +
 	"\vProductKind\x12\x1c\n" +
 	"\x18PRODUCT_KIND_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16PRODUCT_KIND_TEA_GOODS\x10\x01\x12\x15\n" +
-	"\x11PRODUCT_KIND_DISH\x10\x022\xb0\x01\n" +
+	"\x11PRODUCT_KIND_DISH\x10\x022\xf8\x01\n" +
 	"\x0eCatalogService\x12Q\n" +
 	"\fListProducts\x12\x1f.catalog.v1.ListProductsRequest\x1a .catalog.v1.ListProductsResponse\x12K\n" +
 	"\n" +
-	"GetProduct\x12\x1d.catalog.v1.GetProductRequest\x1a\x1e.catalog.v1.GetProductResponseB2Z0tea-platform/internal/genpb/catalog/v1;catalogv1b\x06proto3"
+	"GetProduct\x12\x1d.catalog.v1.GetProductRequest\x1a\x1e.catalog.v1.GetProductResponse\x12F\n" +
+	"\rUpdateProduct\x12 .catalog.v1.UpdateProductRequest\x1a\x13.catalog.v1.ProductB2Z0tea-platform/internal/genpb/catalog/v1;catalogv1b\x06proto3"
 
 var (
 	file_catalog_v1_catalog_proto_rawDescOnce sync.Once
@@ -433,7 +499,7 @@ func file_catalog_v1_catalog_proto_rawDescGZIP() []byte {
 }
 
 var file_catalog_v1_catalog_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_catalog_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_catalog_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_catalog_v1_catalog_proto_goTypes = []any{
 	(ProductKind)(0),             // 0: catalog.v1.ProductKind
 	(*Product)(nil),              // 1: catalog.v1.Product
@@ -441,6 +507,7 @@ var file_catalog_v1_catalog_proto_goTypes = []any{
 	(*ListProductsResponse)(nil), // 3: catalog.v1.ListProductsResponse
 	(*GetProductRequest)(nil),    // 4: catalog.v1.GetProductRequest
 	(*GetProductResponse)(nil),   // 5: catalog.v1.GetProductResponse
+	(*UpdateProductRequest)(nil), // 6: catalog.v1.UpdateProductRequest
 }
 var file_catalog_v1_catalog_proto_depIdxs = []int32{
 	0, // 0: catalog.v1.Product.kind:type_name -> catalog.v1.ProductKind
@@ -449,10 +516,12 @@ var file_catalog_v1_catalog_proto_depIdxs = []int32{
 	1, // 3: catalog.v1.GetProductResponse.product:type_name -> catalog.v1.Product
 	2, // 4: catalog.v1.CatalogService.ListProducts:input_type -> catalog.v1.ListProductsRequest
 	4, // 5: catalog.v1.CatalogService.GetProduct:input_type -> catalog.v1.GetProductRequest
-	3, // 6: catalog.v1.CatalogService.ListProducts:output_type -> catalog.v1.ListProductsResponse
-	5, // 7: catalog.v1.CatalogService.GetProduct:output_type -> catalog.v1.GetProductResponse
-	6, // [6:8] is the sub-list for method output_type
-	4, // [4:6] is the sub-list for method input_type
+	6, // 6: catalog.v1.CatalogService.UpdateProduct:input_type -> catalog.v1.UpdateProductRequest
+	3, // 7: catalog.v1.CatalogService.ListProducts:output_type -> catalog.v1.ListProductsResponse
+	5, // 8: catalog.v1.CatalogService.GetProduct:output_type -> catalog.v1.GetProductResponse
+	1, // 9: catalog.v1.CatalogService.UpdateProduct:output_type -> catalog.v1.Product
+	7, // [7:10] is the sub-list for method output_type
+	4, // [4:7] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name
 	4, // [4:4] is the sub-list for extension extendee
 	0, // [0:4] is the sub-list for field type_name
@@ -469,7 +538,7 @@ func file_catalog_v1_catalog_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_catalog_v1_catalog_proto_rawDesc), len(file_catalog_v1_catalog_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

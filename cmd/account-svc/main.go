@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"google.golang.org/grpc"
@@ -51,7 +52,21 @@ func main() {
 	}
 	defer func() { _ = rdb.Close() }()
 
-	svc := account.NewService(account.NewRepository(pool), rdb, log)
+	var adminEmails []string
+	if cfg.AdminEmails != "" {
+		adminEmails = strings.Split(cfg.AdminEmails, ",")
+	}
+	svc := account.NewService(account.NewRepository(pool), rdb, log, adminEmails)
+
+	// Бутстрап: промоутим уже зарегистрированных админов из ADMIN_EMAILS.
+	if len(adminEmails) > 0 {
+		if err := svc.PromoteAdmins(ctx, adminEmails); err != nil {
+			log.Warn("не удалось назначить админов", "error", err)
+		} else {
+			log.Info("назначены админы из ADMIN_EMAILS", "emails", cfg.AdminEmails)
+		}
+	}
+
 	grpcServer := grpc.NewServer()
 	accountv1.RegisterAccountServiceServer(grpcServer, svc)
 

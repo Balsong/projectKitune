@@ -65,6 +65,23 @@ func (r *Repository) Get(ctx context.Context, id string) (Product, error) {
 	return p, nil
 }
 
+// Update меняет цену и доступность позиции, возвращает обновлённую запись.
+func (r *Repository) Update(ctx context.Context, id string, priceCents int64, available bool) (Product, error) {
+	const query = `
+		UPDATE products SET price_cents = $2, available = $3
+		WHERE id = $1
+		RETURNING ` + selectColumns
+
+	p, err := scanProduct(r.pool.QueryRow(ctx, query, id, priceCents, available))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Product{}, ErrNotFound
+	}
+	if err != nil {
+		return Product{}, fmt.Errorf("catalog: обновление: %w", err)
+	}
+	return p, nil
+}
+
 // scanRow абстрагирует Scan у pgx.Row и pgx.Rows.
 type scanRow interface {
 	Scan(dest ...any) error
