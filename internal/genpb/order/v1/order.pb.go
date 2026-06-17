@@ -459,6 +459,102 @@ func (x *GetOrderRequest) GetId() string {
 	return ""
 }
 
+type ListOrdersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"` // 0 → дефолт (50)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListOrdersRequest) Reset() {
+	*x = ListOrdersRequest{}
+	mi := &file_order_v1_order_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListOrdersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListOrdersRequest) ProtoMessage() {}
+
+func (x *ListOrdersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_order_v1_order_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListOrdersRequest.ProtoReflect.Descriptor instead.
+func (*ListOrdersRequest) Descriptor() ([]byte, []int) {
+	return file_order_v1_order_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ListOrdersRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ListOrdersRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type ListOrdersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Orders        []*Order               `protobuf:"bytes,1,rep,name=orders,proto3" json:"orders,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListOrdersResponse) Reset() {
+	*x = ListOrdersResponse{}
+	mi := &file_order_v1_order_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListOrdersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListOrdersResponse) ProtoMessage() {}
+
+func (x *ListOrdersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_order_v1_order_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListOrdersResponse.ProtoReflect.Descriptor instead.
+func (*ListOrdersResponse) Descriptor() ([]byte, []int) {
+	return file_order_v1_order_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ListOrdersResponse) GetOrders() []*Order {
+	if x != nil {
+		return x.Orders
+	}
+	return nil
+}
+
 var File_order_v1_order_proto protoreflect.FileDescriptor
 
 const file_order_v1_order_proto_rawDesc = "" +
@@ -495,7 +591,12 @@ const file_order_v1_order_proto_rawDesc = "" +
 	"\n" +
 	"booking_id\x18\x05 \x01(\tR\tbookingId\"!\n" +
 	"\x0fGetOrderRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id*\x98\x01\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"B\n" +
+	"\x11ListOrdersRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\"=\n" +
+	"\x12ListOrdersResponse\x12'\n" +
+	"\x06orders\x18\x01 \x03(\v2\x0f.order.v1.OrderR\x06orders*\x98\x01\n" +
 	"\x0fFulfillmentType\x12 \n" +
 	"\x1cFULFILLMENT_TYPE_UNSPECIFIED\x10\x00\x12\"\n" +
 	"\x1eFULFILLMENT_TYPE_SHOP_DELIVERY\x10\x01\x12!\n" +
@@ -509,10 +610,12 @@ const file_order_v1_order_proto_rawDesc = "" +
 	"\x16ORDER_STATUS_CONFIRMED\x10\x04\x12\x1a\n" +
 	"\x16ORDER_STATUS_COMPLETED\x10\x05\x12\x1a\n" +
 	"\x16ORDER_STATUS_CANCELLED\x10\x06\x12\x1f\n" +
-	"\x1bORDER_STATUS_PAYMENT_FAILED\x10\a2\x84\x01\n" +
+	"\x1bORDER_STATUS_PAYMENT_FAILED\x10\a2\xcd\x01\n" +
 	"\fOrderService\x12<\n" +
 	"\vCreateOrder\x12\x1c.order.v1.CreateOrderRequest\x1a\x0f.order.v1.Order\x126\n" +
-	"\bGetOrder\x12\x19.order.v1.GetOrderRequest\x1a\x0f.order.v1.OrderB.Z,tea-platform/internal/genpb/order/v1;orderv1b\x06proto3"
+	"\bGetOrder\x12\x19.order.v1.GetOrderRequest\x1a\x0f.order.v1.Order\x12G\n" +
+	"\n" +
+	"ListOrders\x12\x1b.order.v1.ListOrdersRequest\x1a\x1c.order.v1.ListOrdersResponseB.Z,tea-platform/internal/genpb/order/v1;orderv1b\x06proto3"
 
 var (
 	file_order_v1_order_proto_rawDescOnce sync.Once
@@ -527,7 +630,7 @@ func file_order_v1_order_proto_rawDescGZIP() []byte {
 }
 
 var file_order_v1_order_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_order_v1_order_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_order_v1_order_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_order_v1_order_proto_goTypes = []any{
 	(FulfillmentType)(0),       // 0: order.v1.FulfillmentType
 	(OrderStatus)(0),           // 1: order.v1.OrderStatus
@@ -535,21 +638,26 @@ var file_order_v1_order_proto_goTypes = []any{
 	(*Order)(nil),              // 3: order.v1.Order
 	(*CreateOrderRequest)(nil), // 4: order.v1.CreateOrderRequest
 	(*GetOrderRequest)(nil),    // 5: order.v1.GetOrderRequest
+	(*ListOrdersRequest)(nil),  // 6: order.v1.ListOrdersRequest
+	(*ListOrdersResponse)(nil), // 7: order.v1.ListOrdersResponse
 }
 var file_order_v1_order_proto_depIdxs = []int32{
 	0, // 0: order.v1.Order.fulfillment_type:type_name -> order.v1.FulfillmentType
 	1, // 1: order.v1.Order.status:type_name -> order.v1.OrderStatus
 	2, // 2: order.v1.Order.items:type_name -> order.v1.OrderItem
 	0, // 3: order.v1.CreateOrderRequest.fulfillment_type:type_name -> order.v1.FulfillmentType
-	4, // 4: order.v1.OrderService.CreateOrder:input_type -> order.v1.CreateOrderRequest
-	5, // 5: order.v1.OrderService.GetOrder:input_type -> order.v1.GetOrderRequest
-	3, // 6: order.v1.OrderService.CreateOrder:output_type -> order.v1.Order
-	3, // 7: order.v1.OrderService.GetOrder:output_type -> order.v1.Order
-	6, // [6:8] is the sub-list for method output_type
-	4, // [4:6] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	3, // 4: order.v1.ListOrdersResponse.orders:type_name -> order.v1.Order
+	4, // 5: order.v1.OrderService.CreateOrder:input_type -> order.v1.CreateOrderRequest
+	5, // 6: order.v1.OrderService.GetOrder:input_type -> order.v1.GetOrderRequest
+	6, // 7: order.v1.OrderService.ListOrders:input_type -> order.v1.ListOrdersRequest
+	3, // 8: order.v1.OrderService.CreateOrder:output_type -> order.v1.Order
+	3, // 9: order.v1.OrderService.GetOrder:output_type -> order.v1.Order
+	7, // 10: order.v1.OrderService.ListOrders:output_type -> order.v1.ListOrdersResponse
+	8, // [8:11] is the sub-list for method output_type
+	5, // [5:8] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_order_v1_order_proto_init() }
@@ -563,7 +671,7 @@ func file_order_v1_order_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_order_v1_order_proto_rawDesc), len(file_order_v1_order_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

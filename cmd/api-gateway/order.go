@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	accountv1 "tea-platform/internal/genpb/account/v1"
 	orderv1 "tea-platform/internal/genpb/order/v1"
 	"tea-platform/pkg/response"
 )
@@ -65,12 +66,12 @@ func toOrderDTO(o *orderv1.Order) orderDTO {
 }
 
 // handleCreateOrder оформляет заказ из текущей корзины (по X-Cart-Id).
-func handleCreateOrder(log *slog.Logger, client orderv1.OrderServiceClient) http.HandlerFunc {
+// Если запрос авторизован, заказ привязывается к пользователю (из сессии).
+func handleCreateOrder(log *slog.Logger, account accountv1.AccountServiceClient, client orderv1.OrderServiceClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			FulfillmentType string `json:"fulfillment_type"`
 			Address         string `json:"address"`
-			UserID          string `json:"user_id"`
 			BookingID       string `json:"booking_id"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -90,7 +91,7 @@ func handleCreateOrder(log *slog.Logger, client orderv1.OrderServiceClient) http
 
 		ord, err := client.CreateOrder(ctx, &orderv1.CreateOrderRequest{
 			CartId:          resolveCartID(r),
-			UserId:          body.UserID,
+			UserId:          sessionUserID(ctx, account, r), // пусто для гостя
 			FulfillmentType: ft,
 			Address:         body.Address,
 			BookingId:       body.BookingID,
@@ -100,6 +101,31 @@ func handleCreateOrder(log *slog.Logger, client orderv1.OrderServiceClient) http
 			return
 		}
 		response.WriteJSON(w, http.StatusCreated, toOrderDTO(ord))
+	}
+}
+
+// handleMyOrders возвращает историю заказов текущего пользователя.
+func handleMyOrders(log *slog.Logger, account accountv1.AccountServiceClient, client orderv1.OrderServiceClient) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		uid := sessionUserID(ctx, account, r)
+		if uid == "" {
+			response.Error(w, http.StatusUnauthorized, "Требуется вход")
+			return
+		}
+
+		resp, err := client.ListOrders(ctx, &orderv1.ListOrdersRequest{UserId: uid})
+		if err != nil {
+			writeGRPCError(w, log, "ListOrders", err)
+			return
+		}
+		out := make([]orderDTO, 0, len(resp.GetOrders()))
+		for _, o := range resp.GetOrders() {
+			out = append(out, toOrderDTO(o))
+		}
+		response.WriteJSON(w, http.StatusOK, out)
 	}
 }
 

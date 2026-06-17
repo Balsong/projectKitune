@@ -112,7 +112,8 @@ func main() {
 	mux.HandleFunc("POST /api/v1/cart/merge", handleMergeCart(log, cartClient))
 
 	// Заказы.
-	mux.HandleFunc("POST /api/v1/orders", handleCreateOrder(log, orderClient))
+	mux.HandleFunc("POST /api/v1/orders", handleCreateOrder(log, accountClient, orderClient))
+	mux.HandleFunc("GET /api/v1/orders", handleMyOrders(log, accountClient, orderClient))
 	mux.HandleFunc("GET /api/v1/orders/{id}", handleGetOrder(log, orderClient))
 	mux.HandleFunc("GET /api/v1/orders/{id}/delivery", handleGetDelivery(log, deliveryClient))
 

@@ -187,57 +187,55 @@
     kitsuneObserveReveal();
   }));
 
-  // orders
-  let orders=[]; try{ orders=JSON.parse(localStorage.getItem('kitsune_orders'))||[]; }catch(e){}
-  // seed a sample order if none, so the page isn't empty on first visit
-  if(!orders.length){
-    orders=[{no:'KT-2048', date:'2026-06-09T19:24:00', items:[{id:'set-puer',qty:1},{id:'kit-baozi',qty:2}], total:1670, type:'delivery', pay:'card', status:'Доставлен'},
-            {no:'KT-1907', date:'2026-05-28T13:10:00', items:[{id:'tea-tgy',qty:1},{id:'des-cheesebao',qty:1}], total:960, type:'pickup', pay:'card', status:'Доставлен'}];
-  }
-  const typeLabel={delivery:'Доставка',pickup:'Самовывоз',eatin:'В зале'};
-  const statusBadge=s=> (s==='Готовится'||s==='Оплата'||s==='Создан')?'badge--ochre': s==='Доставлен'?'badge--sage':'';
+  // orders — история из backend (/api/v1/orders), живой статус саги
+  const STATUS_RU={ORDER_STATUS_CREATED:'Создан',ORDER_STATUS_PAYMENT_PENDING:'Оплата',ORDER_STATUS_PAID:'Оплачен',ORDER_STATUS_CONFIRMED:'Готовится',ORDER_STATUS_COMPLETED:'Доставлен',ORDER_STATUS_CANCELLED:'Отменён',ORDER_STATUS_PAYMENT_FAILED:'Оплата отклонена'};
+  const FT_RU={FULFILLMENT_TYPE_FOOD_COURIER:'Доставка',FULFILLMENT_TYPE_SHOP_DELIVERY:'Доставка чая',FULFILLMENT_TYPE_DINE_IN:'В зале'};
+  const TERMINAL=new Set(['ORDER_STATUS_COMPLETED','ORDER_STATUS_CANCELLED','ORDER_STATUS_PAYMENT_FAILED']);
+  const statusBadge=s=> (s==='Готовится'||s==='Оплата'||s==='Создан'||s==='Оплачен')?'badge--ochre': s==='Доставлен'?'badge--sage':'';
   const ordList=document.getElementById('orders-list');
-  if(!orders.length){ document.getElementById('orders-empty').style.display=''; }
-  else ordList.innerHTML = orders.map(o=>{
-    const names = o.items.map(i=>{const p=KITSUNE_FIND(i.id);return (p?p.name:'—')+(i.qty>1?' ×'+i.qty:'');}).join(' · ');
-    const d=new Date(o.date); const ds=d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})+' · '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+
+  function orderCard(o){
+    const no='KT-'+(o.id||'').slice(0,8).toUpperCase();
+    const names=(o.items||[]).map(i=>i.name+(i.quantity>1?' ×'+i.quantity:'')).join(' · ');
+    const d=new Date(o.created_at); const ds=isNaN(d)?'':(d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})+' · '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}));
+    const lbl=STATUS_RU[o.status]||o.status;
+    const repeat=JSON.stringify((o.items||[]).map(i=>({product_id:i.product_id,quantity:i.quantity})));
     return `<div class="card reveal" style="padding:22px;margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
         <div>
-          <div style="display:flex;align-items:center;gap:10px"><b style="font-family:var(--font-head);font-size:19px">Заказ ${o.no}</b><span class="badge ${statusBadge(o.status)}" data-oid="${o.id||''}">${o.status}</span></div>
-          <div class="card__meta" style="margin-top:6px">${ds} · ${typeLabel[o.type]||''}</div>
+          <div style="display:flex;align-items:center;gap:10px"><b style="font-family:var(--font-head);font-size:19px">Заказ ${no}</b><span class="badge ${statusBadge(lbl)}">${lbl}</span></div>
+          <div class="card__meta" style="margin-top:6px">${ds} · ${FT_RU[o.fulfillment_type]||''}</div>
           <p class="card__desc" style="font-size:14.5px;margin-top:8px;max-width:52ch">${names}</p>
         </div>
         <div style="text-align:right">
-          <div class="price">${rub(o.total)}</div>
-          <button class="btn btn--ghost btn--sm" style="margin-top:10px" data-repeat='${JSON.stringify(o.items)}'>Повторить</button>
+          <div class="price">${rub((o.total_cents||0)/100)}</div>
+          <button class="btn btn--ghost btn--sm" style="margin-top:10px" data-repeat='${repeat}'>Повторить</button>
         </div>
       </div>
     </div>`;
-  }).join('');
-
-  ordList.addEventListener('click', e=>{
-    const b=e.target.closest('[data-repeat]'); if(!b) return;
-    try{ JSON.parse(b.dataset.repeat).forEach(i=>KitsuneCart.add(i.id,i.qty)); kitsuneToast('Повторили заказ — в корзине'); }catch(err){}
-  });
-
-  // живой статус заказов из backend (саги) — для заказов с реальным id
-  const STATUS_RU={ORDER_STATUS_CREATED:'Создан',ORDER_STATUS_PAYMENT_PENDING:'Оплата',ORDER_STATUS_PAID:'Оплачен',ORDER_STATUS_CONFIRMED:'Готовится',ORDER_STATUS_COMPLETED:'Доставлен',ORDER_STATUS_CANCELLED:'Отменён',ORDER_STATUS_PAYMENT_FAILED:'Оплата отклонена'};
-  const TERMINAL=new Set(['ORDER_STATUS_COMPLETED','ORDER_STATUS_CANCELLED','ORDER_STATUS_PAYMENT_FAILED']);
-  async function pollStatuses(){
-    let pending=false;
-    for(const o of orders.filter(x=>x.id)){
-      try{
-        const r=await KitsuneAPI.getOrder(o.id);
-        const lbl=STATUS_RU[r.status]||o.status;
-        const el=ordList.querySelector('[data-oid="'+o.id+'"]');
-        if(el){ el.textContent=lbl; el.className='badge '+statusBadge(lbl); }
-        if(!TERMINAL.has(r.status)) pending=true;
-      }catch(e){}
-    }
-    if(pending) setTimeout(pollStatuses,3000);
   }
-  pollStatuses();
+
+  async function loadOrders(){
+    let list=[]; try{ list=await KitsuneAPI.myOrders(); }catch(e){ list=[]; }
+    document.getElementById('stat-orders').textContent=list.length;
+    if(!list.length){ document.getElementById('orders-empty').style.display=''; ordList.innerHTML=''; return; }
+    document.getElementById('orders-empty').style.display='none';
+    ordList.innerHTML=list.map(orderCard).join('');
+    kitsuneObserveReveal();
+    // если есть незавершённые — перезапрашиваем (живой статус саги)
+    if(list.some(o=>!TERMINAL.has(o.status))) setTimeout(loadOrders,3000);
+  }
+  loadOrders();
+
+  ordList.addEventListener('click', async e=>{
+    const b=e.target.closest('[data-repeat]'); if(!b) return;
+    try{
+      const items=JSON.parse(b.dataset.repeat);
+      await Promise.all(items.map(i=>KitsuneAPI.add(i.product_id,i.quantity)));
+      await KitsuneCart.refresh();
+      kitsuneToast('Повторили заказ — в корзине');
+    }catch(err){ kitsuneToast('Не удалось повторить'); }
+  });
 
   // favourites
   let fav=[]; try{ fav=JSON.parse(localStorage.getItem('kitsune_fav_v1'))||[]; }catch(e){}
@@ -245,8 +243,7 @@
   if(!favItems.length) document.getElementById('fav-empty').style.display='';
   else kitsuneRender('#fav-grid', favItems);
 
-  // stats
-  document.getElementById('stat-orders').textContent = orders.length;
+  // stats (stat-orders ставится в loadOrders)
   document.getElementById('stat-fav').textContent = favItems.length;
   kitsuneObserveReveal();
 })();

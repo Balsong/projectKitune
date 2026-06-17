@@ -24,7 +24,8 @@
     add:   (id,q) => fetch("/api/v1/cart/items", {method:"POST",   headers:H(), body:JSON.stringify({product_id:id, quantity:q})}).then(r=>r.json()),
     del:   (id,q) => fetch("/api/v1/cart/items", {method:"DELETE", headers:H(), body:JSON.stringify({product_id:id, quantity:q})}).then(r=>r.json()),
     clear: () => fetch("/api/v1/cart/clear", {method:"POST", headers:H()}).then(r=>r.json()),
-    order: (b) => fetch("/api/v1/orders", {method:"POST", headers:H(), body:JSON.stringify(b)}),
+    order: (b) => fetch("/api/v1/orders", {method:"POST", headers:Object.assign(H(), Auth.headers()), body:JSON.stringify(b)}),
+    myOrders: () => fetch("/api/v1/orders", {headers:Auth.headers()}).then(r=> r.ok ? r.json() : []),
     getOrder: (id) => fetch("/api/v1/orders/"+id).then(r=>r.json()),
     getDelivery: (id) => fetch("/api/v1/orders/"+id+"/delivery").then(r=> r.ok ? r.json() : null)
   };

@@ -21,6 +21,19 @@ func bearerToken(r *http.Request) string {
 	return ""
 }
 
+// sessionUserID возвращает id пользователя по токену сессии или "" для гостя.
+func sessionUserID(ctx context.Context, account accountv1.AccountServiceClient, r *http.Request) string {
+	token := bearerToken(r)
+	if token == "" {
+		return ""
+	}
+	u, err := account.GetSession(ctx, &accountv1.SessionRequest{SessionToken: token})
+	if err != nil {
+		return ""
+	}
+	return u.GetId()
+}
+
 type userDTO struct {
 	ID        string `json:"id"`
 	Email     string `json:"email"`

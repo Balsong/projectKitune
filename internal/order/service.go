@@ -94,6 +94,22 @@ func (s *Service) CreateOrder(ctx context.Context, req *orderv1.CreateOrderReque
 	return o.toProto(), nil
 }
 
+// ListOrders возвращает заказы пользователя для истории кабинета.
+func (s *Service) ListOrders(ctx context.Context, req *orderv1.ListOrdersRequest) (*orderv1.ListOrdersResponse, error) {
+	if req.GetUserId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+	orders, err := s.repo.ListByUser(ctx, req.GetUserId(), int(req.GetLimit()))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list orders: %v", err)
+	}
+	out := make([]*orderv1.Order, 0, len(orders))
+	for _, o := range orders {
+		out = append(out, o.toProto())
+	}
+	return &orderv1.ListOrdersResponse{Orders: out}, nil
+}
+
 // GetOrder возвращает заказ по идентификатору.
 func (s *Service) GetOrder(ctx context.Context, req *orderv1.GetOrderRequest) (*orderv1.Order, error) {
 	if req.GetId() == "" {

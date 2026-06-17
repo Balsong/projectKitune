@@ -188,6 +188,15 @@ hc=$(code -X POST -H "Content-Type: application/json" -d "{\"email\":\"$AEMAIL\"
 # me с токеном → пользователь
 [ "$(jget "$(curl -s "$BASE/api/v1/auth/me" -H "Authorization: Bearer $ATOKEN")" "d.get('email','')")" = "$(printf '%s' "$AEMAIL" | tr 'A-Z' 'a-z')" ] && ok "me с токеном → текущий пользователь" || bad "me не вернул пользователя"
 
+# заказ под пользователем виден в истории (/api/v1/orders)
+ACART="e2e-acc-$$-$RANDOM"
+curl -s -X POST -H "Content-Type: application/json" -H "X-Cart-Id: $ACART" -d "{\"product_id\":\"$TEA_ID\",\"quantity\":1}" "$BASE/api/v1/cart/items" >/dev/null
+curl -s -X POST -H "Content-Type: application/json" -H "X-Cart-Id: $ACART" -H "Authorization: Bearer $ATOKEN" -d '{"fulfillment_type":"food_courier","address":"ul"}' "$BASE/api/v1/orders" >/dev/null
+MINE=$(jget "$(curl -s "$BASE/api/v1/orders" -H "Authorization: Bearer $ATOKEN")" "len(d)")
+[ "$MINE" -ge 1 ] 2>/dev/null && ok "заказ привязан к пользователю (история /orders: $MINE)" || bad "история заказов пуста"
+hc=$(code "$BASE/api/v1/orders")
+[ "$hc" = "401" ] && ok "/orders без токена → 401" || bad "/orders без токена → $hc (ожидали 401)"
+
 # вход верный → токен
 LToken=$(jget "$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$AEMAIL\",\"password\":\"secret123\"}" "$BASE/api/v1/auth/login")" "d.get('session_token','')")
 [ -n "$LToken" ] && [ "$LToken" != "__ERR__" ] && ok "вход с верным паролем → токен" || bad "вход не вернул токен"

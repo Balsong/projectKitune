@@ -12,6 +12,9 @@ service OrderService {
 
   // GetOrder возвращает заказ по идентификатору.
   rpc GetOrder(GetOrderRequest) returns (Order);
+
+  // ListOrders возвращает заказы пользователя (история кабинета).
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
 }
 
 // FulfillmentType — способ получения заказа.
@@ -66,4 +69,13 @@ message CreateOrderRequest {
 
 message GetOrderRequest {
   string id = 1;
+}
+
+message ListOrdersRequest {
+  string user_id = 1;
+  int32 limit = 2; // 0 → дефолт (50)
+}
+
+message ListOrdersResponse {
+  repeated Order orders = 1;
 }

@@ -118,6 +118,64 @@ func (r *Repository) Transition(ctx context.Context, orderID string, from []stri
 	return true, nil
 }
 
+// ListByUser возвращает заказы пользователя (с позициями), новые первыми.
+func (r *Repository) ListByUser(ctx context.Context, userID string, limit int) ([]*Order, error) {
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	const q = `
+		SELECT id, user_id, cart_id, fulfillment_type, status, total_cents, currency, address, booking_id, created_at
+		FROM orders WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2`
+	rows, err := r.pool.Query(ctx, q, userID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("order: list by user: %w", err)
+	}
+	defer rows.Close()
+
+	var orders []*Order
+	for rows.Next() {
+		var o Order
+		if err := rows.Scan(&o.ID, &o.UserID, &o.CartID, &o.FulfillmentType, &o.Status,
+			&o.TotalCents, &o.Currency, &o.Address, &o.BookingID, &o.CreatedAt); err != nil {
+			return nil, fmt.Errorf("order: scan order: %w", err)
+		}
+		orders = append(orders, &o)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for _, o := range orders {
+		items, err := r.loadItems(ctx, o.ID)
+		if err != nil {
+			return nil, err
+		}
+		o.Items = items
+	}
+	return orders, nil
+}
+
+// loadItems читает позиции заказа.
+func (r *Repository) loadItems(ctx context.Context, orderID string) ([]Item, error) {
+	const q = `
+		SELECT product_id, name, quantity, unit_price_cents, subtotal_cents
+		FROM order_items WHERE order_id = $1 ORDER BY id`
+	rows, err := r.pool.Query(ctx, q, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("order: load items: %w", err)
+	}
+	defer rows.Close()
+	var items []Item
+	for rows.Next() {
+		var it Item
+		if err := rows.Scan(&it.ProductID, &it.Name, &it.Quantity, &it.UnitPriceCents, &it.SubtotalCents); err != nil {
+			return nil, fmt.Errorf("order: scan item: %w", err)
+		}
+		items = append(items, it)
+	}
+	return items, rows.Err()
+}
+
 // Get возвращает заказ с позициями или ErrNotFound.
 func (r *Repository) Get(ctx context.Context, id string) (*Order, error) {
 	const selectOrder = `
