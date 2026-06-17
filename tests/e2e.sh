@@ -162,10 +162,16 @@ fi
 
 # ---------- 7. бронирование ----------
 sect "7 · Бронирование столика (/api/v1/book)"
-BK=$(curl -s -X POST -H "Content-Type: application/json" -d '{"table_id":0,"customer":"E2E Тест · +7 999 · 2 гостя","time":"2026-07-01 19:00"}' "$BASE/api/v1/book")
+BK=$(curl -s -X POST -H "Content-Type: application/json" -d '{"customer":"E2E Тест","phone":"+7 999 000-00-00","guests":2,"time":"2026-07-01 19:00","comment":"у окна"}' "$BASE/api/v1/book")
 BID=$(jget "$BK" "d.get('booking_id','')")
 [ -n "$BID" ] && [ "$BID" != "__ERR__" ] && ok "бронь принята (booking_id=$BID)" || bad "бронь не принята" "$BK"
 [ "$(jget "$BK" "d.get('status')")" = "booking_pending" ] && ok "статус брони booking_pending" || bad "неожиданный статус брони"
+# гостевая бронь без имени → 400
+hc=$(code -X POST -H "Content-Type: application/json" -d '{"customer":"","time":""}' "$BASE/api/v1/book")
+[ "$hc" = "400" ] && ok "бронь без имени/времени → 400" || bad "пустая бронь → $hc (ожидали 400)"
+# /bookings без токена → 401
+hc=$(code "$BASE/api/v1/bookings")
+[ "$hc" = "401" ] && ok "/bookings без токена → 401" || bad "/bookings без токена → $hc (ожидали 401)"
 
 # ---------- 8. аккаунт: регистрация / вход / сессия ----------
 sect "8 · Аккаунт (/api/v1/auth)"
@@ -196,6 +202,12 @@ MINE=$(jget "$(curl -s "$BASE/api/v1/orders" -H "Authorization: Bearer $ATOKEN")
 [ "$MINE" -ge 1 ] 2>/dev/null && ok "заказ привязан к пользователю (история /orders: $MINE)" || bad "история заказов пуста"
 hc=$(code "$BASE/api/v1/orders")
 [ "$hc" = "401" ] && ok "/orders без токена → 401" || bad "/orders без токена → $hc (ожидали 401)"
+
+# бронь под пользователем видна в истории (/api/v1/bookings)
+curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $ATOKEN" \
+  -d '{"customer":"E2E Аккаунт","phone":"+70000000000","guests":3,"time":"2026-07-02 20:00","comment":""}' "$BASE/api/v1/book" >/dev/null
+MYBK=$(jget "$(curl -s "$BASE/api/v1/bookings" -H "Authorization: Bearer $ATOKEN")" "len(d)")
+[ "$MYBK" -ge 1 ] 2>/dev/null && ok "бронь привязана к пользователю (история /bookings: $MYBK)" || bad "история броней пуста"
 
 # вход верный → токен
 LToken=$(jget "$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$AEMAIL\",\"password\":\"secret123\"}" "$BASE/api/v1/auth/login")" "d.get('session_token','')")

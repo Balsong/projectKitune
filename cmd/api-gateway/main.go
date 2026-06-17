@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 	"net/http"
 	"os"
@@ -15,13 +14,12 @@ import (
 
 	"tea-platform/internal/config"
 	accountv1 "tea-platform/internal/genpb/account/v1"
+	bookingv1 "tea-platform/internal/genpb/booking/v1"
 	cartv1 "tea-platform/internal/genpb/cart/v1"
 	catalogv1 "tea-platform/internal/genpb/catalog/v1"
 	deliveryv1 "tea-platform/internal/genpb/delivery/v1"
 	orderv1 "tea-platform/internal/genpb/order/v1"
-	"tea-platform/internal/kafka"
 	"tea-platform/internal/metrics"
-	"tea-platform/pkg/events"
 	"tea-platform/pkg/response"
 )
 
@@ -91,18 +89,23 @@ func main() {
 	defer func() { _ = accountConn.Close() }()
 	accountClient := accountv1.NewAccountServiceClient(accountConn)
 
-	// Kafka producer (бронь столов).
-	kafkaProd, err := kafka.NewProducer(cfg.KafkaBrokers)
+	// gRPC-клиент к Booking Service.
+	bookingConn, err := grpc.NewClient(
+		cfg.BookingAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
-		log.Error("не удалось инициализировать Kafka", "error", err)
+		log.Error("не удалось создать gRPC-клиент Booking", "error", err)
 		os.Exit(1)
 	}
-	defer func() { _ = kafkaProd.Close() }()
+	defer func() { _ = bookingConn.Close() }()
+	bookingClient := bookingv1.NewBookingServiceClient(bookingConn)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler)
 	mux.HandleFunc("/api/v1/menu", handleGetMenu(log, catalogClient))
-	mux.HandleFunc("/api/v1/book", handleBookTable(log, kafkaProd))
+	mux.HandleFunc("POST /api/v1/book", handleCreateBooking(log, accountClient, bookingClient))
+	mux.HandleFunc("GET /api/v1/bookings", handleMyBookings(log, accountClient, bookingClient))
 
 	// Корзина (метод-специфичные маршруты, Go 1.22+ ServeMux).
 	mux.HandleFunc("GET /api/v1/cart", handleGetCart(log, cartClient))
@@ -190,60 +193,5 @@ func handleGetMenu(log *slog.Logger, client catalogv1.CatalogServiceClient) http
 			})
 		}
 		response.WriteJSON(w, http.StatusOK, items)
-	}
-}
-
-// bookingRequestedPayload — полезная нагрузка события booking.requested.
-type bookingRequestedPayload struct {
-	BookingID string `json:"booking_id"`
-	TableID   int    `json:"table_id"`
-	Customer  string `json:"customer"`
-	Time      string `json:"time"`
-}
-
-// handleBookTable принимает бронь и публикует событие booking.requested в Kafka.
-func handleBookTable(log *slog.Logger, producer *kafka.Producer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			response.Error(w, http.StatusMethodNotAllowed, "Method not allowed")
-			return
-		}
-
-		var body struct {
-			TableID  int    `json:"table_id"`
-			Customer string `json:"customer"`
-			Time     string `json:"time"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			response.Error(w, http.StatusBadRequest, "Invalid request body")
-			return
-		}
-
-		bookingID := events.NewID()
-		env, err := events.New(events.EventBookingRequested, 1, bookingID, bookingRequestedPayload{
-			BookingID: bookingID,
-			TableID:   body.TableID,
-			Customer:  body.Customer,
-			Time:      body.Time,
-		})
-		if err != nil {
-			log.Error("не удалось собрать событие брони", "error", err)
-			response.Error(w, http.StatusInternalServerError, "Failed to process booking")
-			return
-		}
-
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-		defer cancel()
-		if err := producer.Publish(ctx, events.TopicBookings, env); err != nil {
-			log.Error("не удалось опубликовать бронь в Kafka", "error", err)
-			response.Error(w, http.StatusInternalServerError, "Failed to process booking")
-			return
-		}
-
-		response.WriteJSON(w, http.StatusAccepted, map[string]string{
-			"status":     "booking_pending",
-			"booking_id": bookingID,
-			"message":    "Your booking is being processed",
-		})
 	}
 }

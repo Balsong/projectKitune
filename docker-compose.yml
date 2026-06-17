@@ -196,6 +196,32 @@ services:
     networks:
       - tea-network
 
+  booking-svc:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        SERVICE: booking-svc
+    container_name: booking-svc
+    environment:
+      GRPC_PORT: "9095"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: dev
+      DB_PASSWORD: dev
+      DB_NAME: tea_platform
+      KAFKA_BROKERS: kafka:9092
+    ports:
+      - "9096:9095" # на хосте 9095 занят order-svc
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - tea-network
+
   api-gateway:
     build:
       context: .
@@ -210,6 +236,7 @@ services:
       ORDER_ADDR: order-svc:9092
       DELIVERY_ADDR: delivery-svc:9093
       ACCOUNT_ADDR: account-svc:9094
+      BOOKING_ADDR: booking-svc:9095
       KAFKA_BROKERS: kafka:9092
     ports:
       - "8080:8080"
@@ -223,6 +250,8 @@ services:
       delivery-svc:
         condition: service_started
       account-svc:
+        condition: service_started
+      booking-svc:
         condition: service_started
       kafka:
         condition: service_healthy

@@ -92,6 +92,7 @@
   <div class="container">
     <div class="tagrow reveal" id="tabs" style="margin-bottom:28px">
       <button class="chip is-active" data-tab="orders">История заказов</button>
+      <button class="chip" data-tab="bookings">Мои брони</button>
       <button class="chip" data-tab="fav">Избранное</button>
       <button class="chip" data-tab="profile">Профиль и адреса</button>
     </div>
@@ -104,6 +105,17 @@
         <h3 class="h3" style="margin-top:8px">Заказов пока нет</h3>
         <p class="muted" style="margin-bottom:22px">Оформите первый — он появится здесь со статусом.</p>
         <a class="btn btn--lg" href="menu-kitchen.html">Сделать заказ</a>
+      </div>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div data-panel="bookings" style="display:none">
+      <div id="bookings-list"></div>
+      <div class="empty" id="bookings-empty" style="display:none">
+        <div class="zh">席</div>
+        <h3 class="h3" style="margin-top:8px">Броней пока нет</h3>
+        <p class="muted" style="margin-bottom:22px">Забронируйте столик — заявка появится здесь со статусом.</p>
+        <a class="btn btn--lg" href="reservation.html">Забронировать столик</a>
       </div>
     </div>
 
@@ -236,6 +248,34 @@
       kitsuneToast('Повторили заказ — в корзине');
     }catch(err){ kitsuneToast('Не удалось повторить'); }
   });
+
+  // bookings — брони из backend (/api/v1/bookings)
+  const BSTATUS_RU={new:'Новая',confirmed:'Подтверждена',cancelled:'Отменена',done:'Завершена'};
+  const bookList=document.getElementById('bookings-list');
+  function bookingCard(b){
+    const no='KT-'+(b.id||'').slice(0,8).toUpperCase();
+    const lbl=BSTATUS_RU[b.status]||b.status;
+    const badge=(b.status==='confirmed')?'badge--sage':(b.status==='cancelled')?'':'badge--ochre';
+    const g=b.guests?(b.guests+' гост'+(b.guests===1?'ь':(b.guests<5?'я':'ей'))):'';
+    return `<div class="card reveal" style="padding:22px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px"><b style="font-family:var(--font-head);font-size:19px">Бронь ${no}</b><span class="badge ${badge}">${lbl}</span></div>
+          <div class="card__meta" style="margin-top:6px">${b.time_slot||''}${g?' · '+g:''}</div>
+          ${b.comment?`<p class="card__desc" style="font-size:14.5px;margin-top:8px;max-width:52ch">${b.comment}</p>`:''}
+        </div>
+        <div style="text-align:right"><div class="card__meta">${b.phone||''}</div></div>
+      </div>
+    </div>`;
+  }
+  async function loadBookings(){
+    let list=[]; try{ list=await KitsuneAPI.myBookings(); }catch(e){ list=[]; }
+    if(!list.length){ document.getElementById('bookings-empty').style.display=''; bookList.innerHTML=''; return; }
+    document.getElementById('bookings-empty').style.display='none';
+    bookList.innerHTML=list.map(bookingCard).join('');
+    kitsuneObserveReveal();
+  }
+  loadBookings();
 
   // favourites
   let fav=[]; try{ fav=JSON.parse(localStorage.getItem('kitsune_fav_v1'))||[]; }catch(e){}

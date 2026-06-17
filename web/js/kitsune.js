@@ -27,7 +27,9 @@
     order: (b) => fetch("/api/v1/orders", {method:"POST", headers:Object.assign(H(), Auth.headers()), body:JSON.stringify(b)}),
     myOrders: () => fetch("/api/v1/orders", {headers:Auth.headers()}).then(r=> r.ok ? r.json() : []),
     getOrder: (id) => fetch("/api/v1/orders/"+id).then(r=>r.json()),
-    getDelivery: (id) => fetch("/api/v1/orders/"+id+"/delivery").then(r=> r.ok ? r.json() : null)
+    getDelivery: (id) => fetch("/api/v1/orders/"+id+"/delivery").then(r=> r.ok ? r.json() : null),
+    book: (b) => fetch("/api/v1/book", {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, Auth.headers()), body:JSON.stringify(b)}),
+    myBookings: () => fetch("/api/v1/bookings", {headers:Auth.headers()}).then(r=> r.ok ? r.json() : [])
   };
   window.KitsuneAPI = API;
   window.kitsuneResetCart = () => localStorage.setItem(CARTID_KEY, crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));

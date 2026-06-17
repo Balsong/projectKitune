@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package booking.v1;
+
+option go_package = "tea-platform/internal/genpb/booking/v1;bookingv1";
+
+// BookingService — бронирование столов. Хранит брони и эмитит booking.requested
+// (для уведомлений) через transactional outbox.
+service BookingService {
+  rpc CreateBooking(CreateBookingRequest) returns (Booking);
+  rpc ListBookings(ListBookingsRequest) returns (ListBookingsResponse);
+}
+
+message Booking {
+  string id = 1;
+  string user_id = 2;
+  string customer = 3;
+  string phone = 4;
+  int32 guests = 5;
+  string time_slot = 6; // дата и время визита
+  string comment = 7;
+  string status = 8;    // new | confirmed | cancelled
+  string created_at = 9;
+}
+
+message CreateBookingRequest {
+  string user_id = 1; // пусто для гостя
+  string customer = 2;
+  string phone = 3;
+  int32 guests = 4;
+  string time_slot = 5;
+  string comment = 6;
+}
+
+message ListBookingsRequest {
+  string user_id = 1;
+}
+
+message ListBookingsResponse {
+  repeated Booking bookings = 1;
+}

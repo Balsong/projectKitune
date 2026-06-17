@@ -159,14 +159,15 @@
 
     const val = id => (document.getElementById(id).value || '').trim();
     const name = (val('r-first') + ' ' + val('r-last')).trim();
-    const customer = [name, val('r-phone'), val('r-guests')].filter(Boolean).join(' · ');
+    const guests = parseInt(val('r-guests'), 10) || 1;
     const when = val('r-date') + ' ' + val('r-time');
     const btn = e.target.querySelector('button[type=submit]');
     btn.disabled = true; btn.textContent = 'Отправляем…';
     try{
       const res = await fetch('/api/v1/book', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ table_id: 0, customer, time: when })
+        method:'POST',
+        headers:{'Content-Type':'application/json', ...KitsuneAuth.headers()},
+        body: JSON.stringify({ customer: name, phone: val('r-phone'), guests, time: when, comment: val('r-comment') })
       });
       const data = await res.json().catch(()=>({}));
       if(!res.ok) throw new Error(data.error || ('HTTP '+res.status));
