@@ -145,11 +145,20 @@
           </div>
           <button class="btn" type="button" style="margin-top:20px" onclick="kitsuneToast('Профиль сохранён')">Сохранить</button>
         </form>
-        <div class="card" style="padding:28px">
-          <h3 class="h3" style="margin-bottom:18px">Адреса доставки</h3>
-          <div class="summary__row" style="padding:14px 0;border-bottom:1px solid var(--line-soft)"><span><b>Дом</b><br><span class="muted">ул. Гончарова, 24, кв. 8</span></span><a class="link-arrow" href="#">Изм.</a></div>
-          <div class="summary__row" style="padding:14px 0"><span><b>Работа</b><br><span class="muted">пр-т Нариманова, 12, офис 4</span></span><a class="link-arrow" href="#">Изм.</a></div>
-          <button class="btn btn--ghost btn--sm" type="button" style="margin-top:16px" onclick="kitsuneToast('Добавление адреса')">+ Добавить адрес</button>
+        <div class="stack-md">
+          <form class="card reveal" style="padding:28px" id="pwd-form" novalidate>
+            <h3 class="h3" style="margin-bottom:18px">Смена пароля</h3>
+            <div class="field"><label>Текущий пароль <span class="req">*</span></label><input type="password" id="pwd-old" autocomplete="current-password" required></div>
+            <div class="field" style="margin-top:16px"><label>Новый пароль <span class="req">*</span></label><input type="password" id="pwd-new" autocomplete="new-password" minlength="6" required></div>
+            <div class="field" style="margin-top:16px"><label>Повторите новый <span class="req">*</span></label><input type="password" id="pwd-new2" autocomplete="new-password" minlength="6" required></div>
+            <button class="btn" type="submit" style="margin-top:20px">Сменить пароль</button>
+          </form>
+          <div class="card" style="padding:28px">
+            <h3 class="h3" style="margin-bottom:18px">Адреса доставки</h3>
+            <div class="summary__row" style="padding:14px 0;border-bottom:1px solid var(--line-soft)"><span><b>Дом</b><br><span class="muted">ул. Гончарова, 24, кв. 8</span></span><a class="link-arrow" href="#">Изм.</a></div>
+            <div class="summary__row" style="padding:14px 0"><span><b>Работа</b><br><span class="muted">пр-т Нариманова, 12, офис 4</span></span><a class="link-arrow" href="#">Изм.</a></div>
+            <button class="btn btn--ghost btn--sm" type="button" style="margin-top:16px" onclick="kitsuneToast('Добавление адреса')">+ Добавить адрес</button>
+          </div>
         </div>
       </div>
     </div>
@@ -288,6 +297,29 @@
   const favItems = fav.map(id=>KITSUNE_FIND(id)).filter(Boolean);
   if(!favItems.length) document.getElementById('fav-empty').style.display='';
   else kitsuneRender('#fav-grid', favItems);
+
+  // смена пароля
+  const pwdForm = document.getElementById('pwd-form');
+  if(pwdForm) pwdForm.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const oldP=document.getElementById('pwd-old').value;
+    const newP=document.getElementById('pwd-new').value;
+    const newP2=document.getElementById('pwd-new2').value;
+    if(newP.length<6){ kitsuneToast('Новый пароль — минимум 6 символов'); return; }
+    if(newP!==newP2){ kitsuneToast('Пароли не совпадают'); return; }
+    const btn=e.target.querySelector('button[type=submit]');
+    btn.disabled=true; btn.textContent='Меняем…';
+    try{
+      await KitsuneAuth.changePassword(oldP, newP);
+      pwdForm.reset();
+      kitsuneToast('Пароль изменён');
+      btn.textContent='Готово ✓';
+      setTimeout(()=>{ btn.textContent='Сменить пароль'; btn.disabled=false; }, 1400);
+    }catch(err){
+      kitsuneToast(err.message==='текущий пароль неверный' ? 'Текущий пароль неверный' : ('Не удалось: '+err.message));
+      btn.textContent='Сменить пароль'; btn.disabled=false;
+    }
+  });
 
   // stats (stat-orders ставится в loadOrders)
   document.getElementById('stat-fav').textContent = favItems.length;

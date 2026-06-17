@@ -19,7 +19,17 @@ import (
 // sessionTTL — срок жизни сессии в Redis.
 const sessionTTL = 7 * 24 * time.Hour
 
+// Защита от брутфорса: после maxLoginAttempts неудачных входов по одному
+// e-mail в окне lockoutWindow вход блокируется до истечения окна.
+const (
+	maxLoginAttempts = 5
+	lockoutWindow    = 15 * time.Minute
+)
+
 func sessionKey(token string) string { return "session:" + token }
+func loginFailKey(email string) string {
+	return "login_fail:" + strings.TrimSpace(strings.ToLower(email))
+}
 
 // Service реализует gRPC AccountService.
 type Service struct {
@@ -91,19 +101,28 @@ func (s *Service) Register(ctx context.Context, req *accountv1.RegisterRequest) 
 	return &accountv1.AuthResponse{SessionToken: token, User: toProto(u)}, nil
 }
 
-// Login проверяет пароль и открывает сессию.
+// Login проверяет пароль и открывает сессию. Защищён от брутфорса: после
+// серии неудач вход по этому e-mail временно блокируется.
 func (s *Service) Login(ctx context.Context, req *accountv1.LoginRequest) (*accountv1.AuthResponse, error) {
+	if s.loginLocked(ctx, req.GetEmail()) {
+		return nil, status.Error(codes.ResourceExhausted, "слишком много попыток входа, попробуйте позже")
+	}
+
 	hash, u, err := s.repo.Credentials(ctx, req.GetEmail())
 	if errors.Is(err, ErrNotFound) {
+		s.recordLoginFailure(ctx, req.GetEmail())
 		return nil, status.Error(codes.Unauthenticated, "неверный e-mail или пароль")
 	}
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "credentials: %v", err)
 	}
 	if bcrypt.CompareHashAndPassword([]byte(hash), []byte(req.GetPassword())) != nil {
+		s.recordLoginFailure(ctx, req.GetEmail())
 		return nil, status.Error(codes.Unauthenticated, "неверный e-mail или пароль")
 	}
 
+	// Успех — сбрасываем счётчик неудач.
+	_ = s.rdb.Del(ctx, loginFailKey(req.GetEmail())).Err()
 	s.ensureAdmin(ctx, u)
 	token, err := s.openSession(ctx, u.ID)
 	if err != nil {
@@ -140,6 +159,64 @@ func (s *Service) Logout(ctx context.Context, req *accountv1.SessionRequest) (*a
 	if req.GetSessionToken() != "" {
 		_ = s.rdb.Del(ctx, sessionKey(req.GetSessionToken())).Err()
 	}
+	return &accountv1.LogoutResponse{Ok: true}, nil
+}
+
+// loginLocked сообщает, превышен ли лимит неудачных входов по e-mail.
+func (s *Service) loginLocked(ctx context.Context, email string) bool {
+	n, err := s.rdb.Get(ctx, loginFailKey(email)).Int()
+	if err != nil {
+		return false // нет ключа или Redis недоступен — не блокируем
+	}
+	return n >= maxLoginAttempts
+}
+
+// recordLoginFailure инкрементит счётчик неудач и продлевает окно блокировки.
+func (s *Service) recordLoginFailure(ctx context.Context, email string) {
+	key := loginFailKey(email)
+	if err := s.rdb.Incr(ctx, key).Err(); err != nil {
+		return
+	}
+	_ = s.rdb.Expire(ctx, key, lockoutWindow).Err()
+}
+
+// ChangePassword меняет пароль авторизованного пользователя (по сессии),
+// проверяя текущий пароль. Текущая сессия остаётся действительной.
+func (s *Service) ChangePassword(ctx context.Context, req *accountv1.ChangePasswordRequest) (*accountv1.LogoutResponse, error) {
+	if req.GetSessionToken() == "" {
+		return nil, status.Error(codes.Unauthenticated, "нет токена сессии")
+	}
+	if len(req.GetNewPassword()) < 6 {
+		return nil, status.Error(codes.InvalidArgument, "новый пароль должен быть не короче 6 символов")
+	}
+
+	userID, err := s.rdb.Get(ctx, sessionKey(req.GetSessionToken())).Result()
+	if errors.Is(err, redis.Nil) {
+		return nil, status.Error(codes.Unauthenticated, "сессия истекла или недействительна")
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "session lookup: %v", err)
+	}
+
+	hash, err := s.repo.PasswordHash(ctx, userID)
+	if errors.Is(err, ErrNotFound) {
+		return nil, status.Error(codes.Unauthenticated, "пользователь не найден")
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "password hash: %v", err)
+	}
+	if bcrypt.CompareHashAndPassword([]byte(hash), []byte(req.GetOldPassword())) != nil {
+		return nil, status.Error(codes.PermissionDenied, "текущий пароль неверный")
+	}
+
+	newHash, err := bcrypt.GenerateFromPassword([]byte(req.GetNewPassword()), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "hash password: %v", err)
+	}
+	if err := s.repo.UpdatePassword(ctx, userID, string(newHash)); err != nil {
+		return nil, status.Errorf(codes.Internal, "update password: %v", err)
+	}
+	s.log.Info("смена пароля", "user_id", userID)
 	return &accountv1.LogoutResponse{Ok: true}, nil
 }
 

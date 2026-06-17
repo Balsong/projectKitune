@@ -127,10 +127,13 @@ func main() {
 	mux.HandleFunc("POST /api/v1/admin/menu/{id}", handleAdminUpdateProduct(log, accountClient, catalogClient))
 
 	// Аккаунт: регистрация, вход, текущий пользователь, выход.
-	mux.HandleFunc("POST /api/v1/auth/register", handleRegister(log, accountClient))
-	mux.HandleFunc("POST /api/v1/auth/login", handleLogin(log, accountClient))
+	// Чувствительные маршруты под rate-limit по IP (барьер от брутфорса).
+	authLimiter := newRateLimiter(60, time.Minute)
+	mux.HandleFunc("POST /api/v1/auth/register", authLimiter.middleware(handleRegister(log, accountClient)))
+	mux.HandleFunc("POST /api/v1/auth/login", authLimiter.middleware(handleLogin(log, accountClient)))
 	mux.HandleFunc("POST /api/v1/auth/logout", handleLogout(log, accountClient))
 	mux.HandleFunc("GET /api/v1/auth/me", handleMe(log, accountClient))
+	mux.HandleFunc("POST /api/v1/auth/change-password", authLimiter.middleware(handleChangePassword(log, accountClient)))
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

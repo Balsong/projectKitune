@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AccountService_Register_FullMethodName   = "/account.v1.AccountService/Register"
-	AccountService_Login_FullMethodName      = "/account.v1.AccountService/Login"
-	AccountService_GetSession_FullMethodName = "/account.v1.AccountService/GetSession"
-	AccountService_Logout_FullMethodName     = "/account.v1.AccountService/Logout"
+	AccountService_Register_FullMethodName       = "/account.v1.AccountService/Register"
+	AccountService_Login_FullMethodName          = "/account.v1.AccountService/Login"
+	AccountService_GetSession_FullMethodName     = "/account.v1.AccountService/GetSession"
+	AccountService_Logout_FullMethodName         = "/account.v1.AccountService/Logout"
+	AccountService_ChangePassword_FullMethodName = "/account.v1.AccountService/ChangePassword"
 )
 
 // AccountServiceClient is the client API for AccountService service.
@@ -36,6 +37,7 @@ type AccountServiceClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 	GetSession(ctx context.Context, in *SessionRequest, opts ...grpc.CallOption) (*User, error)
 	Logout(ctx context.Context, in *SessionRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
+	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
 }
 
 type accountServiceClient struct {
@@ -86,6 +88,16 @@ func (c *accountServiceClient) Logout(ctx context.Context, in *SessionRequest, o
 	return out, nil
 }
 
+func (c *accountServiceClient) ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*LogoutResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LogoutResponse)
+	err := c.cc.Invoke(ctx, AccountService_ChangePassword_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServiceServer is the server API for AccountService service.
 // All implementations must embed UnimplementedAccountServiceServer
 // for forward compatibility.
@@ -97,6 +109,7 @@ type AccountServiceServer interface {
 	Login(context.Context, *LoginRequest) (*AuthResponse, error)
 	GetSession(context.Context, *SessionRequest) (*User, error)
 	Logout(context.Context, *SessionRequest) (*LogoutResponse, error)
+	ChangePassword(context.Context, *ChangePasswordRequest) (*LogoutResponse, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
 
@@ -118,6 +131,9 @@ func (UnimplementedAccountServiceServer) GetSession(context.Context, *SessionReq
 }
 func (UnimplementedAccountServiceServer) Logout(context.Context, *SessionRequest) (*LogoutResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Logout not implemented")
+}
+func (UnimplementedAccountServiceServer) ChangePassword(context.Context, *ChangePasswordRequest) (*LogoutResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ChangePassword not implemented")
 }
 func (UnimplementedAccountServiceServer) mustEmbedUnimplementedAccountServiceServer() {}
 func (UnimplementedAccountServiceServer) testEmbeddedByValue()                        {}
@@ -212,6 +228,24 @@ func _AccountService_Logout_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_ChangePassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangePasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).ChangePassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_ChangePassword_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).ChangePassword(ctx, req.(*ChangePasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -234,6 +268,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Logout",
 			Handler:    _AccountService_Logout_Handler,
+		},
+		{
+			MethodName: "ChangePassword",
+			Handler:    _AccountService_ChangePassword_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

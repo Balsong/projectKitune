@@ -266,6 +266,41 @@ UP=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bear
 # страница админки отдаётся
 page "/admin.html"
 
+# ---------- 10. безопасность аккаунтов ----------
+sect "10 · Безопасность (смена пароля, защита от брутфорса)"
+
+# смена пароля: регистрируем пользователя, меняем пароль
+PEMAIL="e2e-pwd-$$-$RANDOM@kitsune.tea"
+PREG=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$PEMAIL\",\"password\":\"oldpass123\",\"consent_personal_data\":true}" "$BASE/api/v1/auth/register")
+PTOKEN=$(jget "$PREG" "d.get('session_token','')")
+# неверный текущий пароль → 403
+hc=$(code -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $PTOKEN" -d '{"old_password":"wrongpass","new_password":"newpass123"}' "$BASE/api/v1/auth/change-password")
+[ "$hc" = "403" ] && ok "смена пароля с неверным текущим → 403" || bad "неверный текущий пароль → $hc (ожидали 403)"
+# слишком короткий новый → 400
+hc=$(code -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $PTOKEN" -d '{"old_password":"oldpass123","new_password":"123"}' "$BASE/api/v1/auth/change-password")
+[ "$hc" = "400" ] && ok "короткий новый пароль → 400" || bad "короткий пароль → $hc (ожидали 400)"
+# без токена → 401
+hc=$(code -X POST -H "Content-Type: application/json" -d '{"old_password":"oldpass123","new_password":"newpass123"}' "$BASE/api/v1/auth/change-password")
+[ "$hc" = "401" ] && ok "смена пароля без токена → 401" || bad "без токена → $hc (ожидали 401)"
+# корректная смена → 200, вход новым работает, старым — нет
+hc=$(code -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $PTOKEN" -d '{"old_password":"oldpass123","new_password":"newpass123"}' "$BASE/api/v1/auth/change-password")
+[ "$hc" = "200" ] && ok "смена пароля с верным текущим → 200" || bad "смена пароля → $hc (ожидали 200)"
+NLOGIN=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$PEMAIL\",\"password\":\"newpass123\"}" "$BASE/api/v1/auth/login")
+NT=$(jget "$NLOGIN" "d.get('session_token','')")
+[ -n "$NT" ] && [ "$NT" != "__ERR__" ] && ok "вход новым паролем работает" || bad "вход новым паролем не сработал"
+hc=$(code -X POST -H "Content-Type: application/json" -d "{\"email\":\"$PEMAIL\",\"password\":\"oldpass123\"}" "$BASE/api/v1/auth/login")
+[ "$hc" = "401" ] && ok "вход старым паролем → 401" || bad "старый пароль → $hc (ожидали 401)"
+
+# защита от брутфорса: после 5 неудач вход блокируется (429)
+LEMAIL="e2e-lock-$$-$RANDOM@kitsune.tea"
+curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$LEMAIL\",\"password\":\"secret123\",\"consent_personal_data\":true}" "$BASE/api/v1/auth/register" >/dev/null
+for i in 1 2 3 4 5; do
+  code -X POST -H "Content-Type: application/json" -d "{\"email\":\"$LEMAIL\",\"password\":\"wrong$i\"}" "$BASE/api/v1/auth/login" >/dev/null
+done
+# 6-я попытка даже с верным паролем → 429 (аккаунт временно заблокирован)
+hc=$(code -X POST -H "Content-Type: application/json" -d "{\"email\":\"$LEMAIL\",\"password\":\"secret123\"}" "$BASE/api/v1/auth/login")
+[ "$hc" = "429" ] && ok "после 5 неудач вход заблокирован (429)" || bad "брутфорс-лок → $hc (ожидали 429)"
+
 # ---------- итог ----------
 printf "\n${c_bold}Итого:${c_off} ${c_green}%d прошло${c_off}, " "$PASS"
 if [ "$FAIL" -eq 0 ]; then

@@ -69,6 +69,16 @@
     async logout(){
       try{ await fetch("/api/v1/auth/logout", { method:"POST", headers: this.headers() }); }catch(e){}
       this.setToken("");
+    },
+    async changePassword(oldPassword, newPassword){
+      const r = await fetch("/api/v1/auth/change-password", {
+        method:"POST",
+        headers: Object.assign({"Content-Type":"application/json"}, this.headers()),
+        body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error || ("HTTP "+r.status));
+      return true;
     }
   };
   window.KitsuneAuth = Auth;

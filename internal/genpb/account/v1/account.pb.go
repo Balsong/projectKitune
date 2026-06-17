@@ -373,6 +373,66 @@ func (x *LogoutResponse) GetOk() bool {
 	return false
 }
 
+type ChangePasswordRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionToken  string                 `protobuf:"bytes,1,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
+	OldPassword   string                 `protobuf:"bytes,2,opt,name=old_password,json=oldPassword,proto3" json:"old_password,omitempty"`
+	NewPassword   string                 `protobuf:"bytes,3,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangePasswordRequest) Reset() {
+	*x = ChangePasswordRequest{}
+	mi := &file_account_v1_account_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangePasswordRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangePasswordRequest) ProtoMessage() {}
+
+func (x *ChangePasswordRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_account_v1_account_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangePasswordRequest.ProtoReflect.Descriptor instead.
+func (*ChangePasswordRequest) Descriptor() ([]byte, []int) {
+	return file_account_v1_account_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ChangePasswordRequest) GetSessionToken() string {
+	if x != nil {
+		return x.SessionToken
+	}
+	return ""
+}
+
+func (x *ChangePasswordRequest) GetOldPassword() string {
+	if x != nil {
+		return x.OldPassword
+	}
+	return ""
+}
+
+func (x *ChangePasswordRequest) GetNewPassword() string {
+	if x != nil {
+		return x.NewPassword
+	}
+	return ""
+}
+
 var File_account_v1_account_proto protoreflect.FileDescriptor
 
 const file_account_v1_account_proto_rawDesc = "" +
@@ -402,13 +462,18 @@ const file_account_v1_account_proto_rawDesc = "" +
 	"\x0eSessionRequest\x12#\n" +
 	"\rsession_token\x18\x01 \x01(\tR\fsessionToken\" \n" +
 	"\x0eLogoutResponse\x12\x0e\n" +
-	"\x02ok\x18\x01 \x01(\bR\x02ok2\x8e\x02\n" +
+	"\x02ok\x18\x01 \x01(\bR\x02ok\"\x82\x01\n" +
+	"\x15ChangePasswordRequest\x12#\n" +
+	"\rsession_token\x18\x01 \x01(\tR\fsessionToken\x12!\n" +
+	"\fold_password\x18\x02 \x01(\tR\voldPassword\x12!\n" +
+	"\fnew_password\x18\x03 \x01(\tR\vnewPassword2\xdf\x02\n" +
 	"\x0eAccountService\x12A\n" +
 	"\bRegister\x12\x1b.account.v1.RegisterRequest\x1a\x18.account.v1.AuthResponse\x12;\n" +
 	"\x05Login\x12\x18.account.v1.LoginRequest\x1a\x18.account.v1.AuthResponse\x12:\n" +
 	"\n" +
 	"GetSession\x12\x1a.account.v1.SessionRequest\x1a\x10.account.v1.User\x12@\n" +
-	"\x06Logout\x12\x1a.account.v1.SessionRequest\x1a\x1a.account.v1.LogoutResponseB2Z0tea-platform/internal/genpb/account/v1;accountv1b\x06proto3"
+	"\x06Logout\x12\x1a.account.v1.SessionRequest\x1a\x1a.account.v1.LogoutResponse\x12O\n" +
+	"\x0eChangePassword\x12!.account.v1.ChangePasswordRequest\x1a\x1a.account.v1.LogoutResponseB2Z0tea-platform/internal/genpb/account/v1;accountv1b\x06proto3"
 
 var (
 	file_account_v1_account_proto_rawDescOnce sync.Once
@@ -422,14 +487,15 @@ func file_account_v1_account_proto_rawDescGZIP() []byte {
 	return file_account_v1_account_proto_rawDescData
 }
 
-var file_account_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_account_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_account_v1_account_proto_goTypes = []any{
-	(*User)(nil),            // 0: account.v1.User
-	(*RegisterRequest)(nil), // 1: account.v1.RegisterRequest
-	(*LoginRequest)(nil),    // 2: account.v1.LoginRequest
-	(*AuthResponse)(nil),    // 3: account.v1.AuthResponse
-	(*SessionRequest)(nil),  // 4: account.v1.SessionRequest
-	(*LogoutResponse)(nil),  // 5: account.v1.LogoutResponse
+	(*User)(nil),                  // 0: account.v1.User
+	(*RegisterRequest)(nil),       // 1: account.v1.RegisterRequest
+	(*LoginRequest)(nil),          // 2: account.v1.LoginRequest
+	(*AuthResponse)(nil),          // 3: account.v1.AuthResponse
+	(*SessionRequest)(nil),        // 4: account.v1.SessionRequest
+	(*LogoutResponse)(nil),        // 5: account.v1.LogoutResponse
+	(*ChangePasswordRequest)(nil), // 6: account.v1.ChangePasswordRequest
 }
 var file_account_v1_account_proto_depIdxs = []int32{
 	0, // 0: account.v1.AuthResponse.user:type_name -> account.v1.User
@@ -437,12 +503,14 @@ var file_account_v1_account_proto_depIdxs = []int32{
 	2, // 2: account.v1.AccountService.Login:input_type -> account.v1.LoginRequest
 	4, // 3: account.v1.AccountService.GetSession:input_type -> account.v1.SessionRequest
 	4, // 4: account.v1.AccountService.Logout:input_type -> account.v1.SessionRequest
-	3, // 5: account.v1.AccountService.Register:output_type -> account.v1.AuthResponse
-	3, // 6: account.v1.AccountService.Login:output_type -> account.v1.AuthResponse
-	0, // 7: account.v1.AccountService.GetSession:output_type -> account.v1.User
-	5, // 8: account.v1.AccountService.Logout:output_type -> account.v1.LogoutResponse
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
+	6, // 5: account.v1.AccountService.ChangePassword:input_type -> account.v1.ChangePasswordRequest
+	3, // 6: account.v1.AccountService.Register:output_type -> account.v1.AuthResponse
+	3, // 7: account.v1.AccountService.Login:output_type -> account.v1.AuthResponse
+	0, // 8: account.v1.AccountService.GetSession:output_type -> account.v1.User
+	5, // 9: account.v1.AccountService.Logout:output_type -> account.v1.LogoutResponse
+	5, // 10: account.v1.AccountService.ChangePassword:output_type -> account.v1.LogoutResponse
+	6, // [6:11] is the sub-list for method output_type
+	1, // [1:6] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -459,7 +527,7 @@ func file_account_v1_account_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_account_v1_account_proto_rawDesc), len(file_account_v1_account_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

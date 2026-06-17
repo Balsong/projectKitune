@@ -11,6 +11,7 @@ service AccountService {
   rpc Login(LoginRequest) returns (AuthResponse);
   rpc GetSession(SessionRequest) returns (User); // валидация токена
   rpc Logout(SessionRequest) returns (LogoutResponse);
+  rpc ChangePassword(ChangePasswordRequest) returns (LogoutResponse); // ok=true
 }
 
 message User {
@@ -46,4 +47,10 @@ message SessionRequest {
 
 message LogoutResponse {
   bool ok = 1;
+}
+
+message ChangePasswordRequest {
+  string session_token = 1;
+  string old_password = 2;
+  string new_password = 3;
 }

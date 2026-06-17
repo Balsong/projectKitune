@@ -109,6 +109,30 @@ func (r *Repository) PromoteAdmins(ctx context.Context, emails []string) error {
 	return err
 }
 
+// PasswordHash возвращает текущий хэш пароля по id пользователя (для смены пароля).
+func (r *Repository) PasswordHash(ctx context.Context, id string) (string, error) {
+	const q = `SELECT password_hash FROM users WHERE id = $1`
+	var hash string
+	err := r.pool.QueryRow(ctx, q, id).Scan(&hash)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrNotFound
+	}
+	return hash, err
+}
+
+// UpdatePassword устанавливает новый хэш пароля по id пользователя.
+func (r *Repository) UpdatePassword(ctx context.Context, id, passwordHash string) error {
+	const q = `UPDATE users SET password_hash = $2 WHERE id = $1`
+	tag, err := r.pool.Exec(ctx, q, id, passwordHash)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // isUniqueViolation распознаёт ошибку нарушения уникальности (код 23505).
 func isUniqueViolation(err error) bool {
 	if err == nil {

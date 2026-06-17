@@ -25,6 +25,10 @@ func writeGRPCError(w http.ResponseWriter, log *slog.Logger, op string, err erro
 		response.Error(w, http.StatusConflict, st.Message())
 	case codes.Unauthenticated:
 		response.Error(w, http.StatusUnauthorized, st.Message())
+	case codes.PermissionDenied:
+		response.Error(w, http.StatusForbidden, st.Message())
+	case codes.ResourceExhausted:
+		response.Error(w, http.StatusTooManyRequests, st.Message())
 	case codes.Unavailable:
 		log.Error("upstream unavailable", "op", op, "error", err)
 		response.Error(w, http.StatusBadGateway, "Service unavailable")

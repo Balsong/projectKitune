@@ -130,6 +130,30 @@ func handleMe(log *slog.Logger, client accountv1.AccountServiceClient) http.Hand
 	}
 }
 
+// handleChangePassword меняет пароль авторизованного пользователя.
+func handleChangePassword(log *slog.Logger, client accountv1.AccountServiceClient) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			OldPassword string `json:"old_password"`
+			NewPassword string `json:"new_password"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			response.Error(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		if _, err := client.ChangePassword(ctx, &accountv1.ChangePasswordRequest{
+			SessionToken: bearerToken(r), OldPassword: body.OldPassword, NewPassword: body.NewPassword,
+		}); err != nil {
+			writeGRPCError(w, log, "ChangePassword", err)
+			return
+		}
+		response.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+	}
+}
+
 // handleLogout завершает сессию.
 func handleLogout(log *slog.Logger, client accountv1.AccountServiceClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
