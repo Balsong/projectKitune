@@ -1,0 +1,15 @@
+{
+  "name": "kitsune-browser-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Браузерные (E2E) тесты сайта КИЦУНЭ на Playwright",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report",
+    "install:browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}

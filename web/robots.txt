@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+# Приватные и функциональные страницы — не индексируем.
+Disallow: /admin.html
+Disallow: /account.html
+Disallow: /login.html
+Disallow: /register.html
+Disallow: /cart.html
+
+Sitemap: https://kitsune.tea/sitemap.xml

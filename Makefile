@@ -1,4 +1,4 @@
-.PHONY: up down logs rebuild test run-local web
+.PHONY: up down logs rebuild test run-local web test-e2e test-browser
 
 # ── Полный стек ──
 up:
@@ -28,3 +28,7 @@ web:
 # ── E2E-тесты сайта (через web :8081) ──
 test-e2e:
 	bash tests/e2e.sh
+
+# Браузерные (Playwright) тесты. Требуют один раз: cd tests/browser && npm install && npm run install:browsers
+test-browser:
+	cd tests/browser && npm test
