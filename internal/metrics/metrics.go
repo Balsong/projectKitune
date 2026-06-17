@@ -68,6 +68,19 @@ var (
 		Name: "tea_outbox_published_total",
 		Help: "Опубликованные из outbox события",
 	}, []string{"source"})
+
+	// EventRetries — повторные попытки обработки события, по топику.
+	EventRetries = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "tea_event_retries_total",
+		Help: "Повторные попытки обработки события из Kafka",
+	}, []string{"topic"})
+
+	// EventsDeadLettered — события, ушедшие в DLQ после исчерпания ретраев,
+	// по топику и причине (parse|handler).
+	EventsDeadLettered = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "tea_events_dead_lettered_total",
+		Help: "События, отправленные в dead-letter-очередь",
+	}, []string{"topic", "reason"})
 )
 
 // Serve запускает HTTP-эндпоинт /metrics на addr (блокирующий вызов; обычно в
