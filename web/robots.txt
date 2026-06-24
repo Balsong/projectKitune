@@ -6,5 +6,6 @@ Disallow: /account.html
 Disallow: /login.html
 Disallow: /register.html
 Disallow: /cart.html
+Disallow: /shop-cart.html
 
 Sitemap: https://kitsune.tea/sitemap.xml

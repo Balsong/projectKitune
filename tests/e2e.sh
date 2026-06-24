@@ -301,6 +301,58 @@ done
 hc=$(code -X POST -H "Content-Type: application/json" -d "{\"email\":\"$LEMAIL\",\"password\":\"secret123\"}" "$BASE/api/v1/auth/login")
 [ "$hc" = "429" ] && ok "после 5 неудач вход заблокирован (429)" || bad "брутфорс-лок → $hc (ожидали 429)"
 
+# ---------- 11. чайный магазин ----------
+sect "11 · Чайный магазин (/api/v1/shop)"
+SHOPMENU=$(curl -s "$BASE/api/v1/shop/menu")
+SN=$(jget "$SHOPMENU" "len(d)")
+[ "$SN" -ge 20 ] 2>/dev/null && ok "каталог магазина: $SN товаров" || bad "каталог магазина пуст" "$SHOPMENU"
+HASF=$(jget "$SHOPMENU" "all(k in d[0] for k in ('id','sku','price_cents','stock_qty','available','weight_grams'))")
+[ "$HASF" = "True" ] && ok "у товара есть поля магазина (вес/остаток)" || bad "нет полей товара магазина"
+SPID=$(jget "$SHOPMENU" "[x['id'] for x in d if x['sku']=='shop-oolong-milky'][0]")
+SSTOCK0=$(jget "$SHOPMENU" "[x['stock_qty'] for x in d if x['sku']=='shop-oolong-milky'][0]")
+
+SCART="e2e-shop-$$-$RANDOM"
+SADD=$(curl -s -X POST -H "Content-Type: application/json" -H "X-Shop-Cart-Id: $SCART" -d "{\"product_id\":\"$SPID\",\"quantity\":2}" "$BASE/api/v1/shop/cart/items")
+[ "$(jget "$SADD" "d['items'][0]['quantity']")" = "2" ] && ok "корзина магазина: товар ×2" || bad "add в корзину магазина не сработал" "$SADD"
+
+# checkout гостя: доставка платная (сумма < 3000 ₽), статус paid
+SCHK=$(curl -s -X POST -H "Content-Type: application/json" -H "X-Shop-Cart-Id: $SCART" -d '{"customer":"E2E Покупатель","phone":"+70000000000","email":"e2e@kitsune.tea","city":"Москва","address":"ул. Тестовая, 1","postal_code":"101000"}' "$BASE/api/v1/shop/checkout")
+SOID=$(jget "$SCHK" "d.get('id','')")
+[ -n "$SOID" ] && [ "$SOID" != "__ERR__" ] && [ "$(jget "$SCHK" "d.get('status')")" = "paid" ] && ok "checkout магазина → заказ оплачен (paid)" || bad "checkout магазина не сработал" "$SCHK"
+[ "$(jget "$SCHK" "d.get('delivery_cents')")" = "35000" ] && ok "доставка 350 ₽ (сумма ниже порога)" || bad "доставка посчитана неверно" "$SCHK"
+
+# склад списан на 2
+SMENU2=$(curl -s "$BASE/api/v1/shop/menu")
+SSTOCK1=$(jget "$SMENU2" "[x['stock_qty'] for x in d if x['sku']=='shop-oolong-milky'][0]")
+SEXP=$(( ${SSTOCK0:-0} - 2 ))
+[ "$SSTOCK1" = "$SEXP" ] && ok "склад списан после заказа ($SSTOCK0 -> $SSTOCK1)" || bad "склад не списан ($SSTOCK0 -> $SSTOCK1)"
+
+# корзина очищена после checkout
+SCART2=$(curl -s -H "X-Shop-Cart-Id: $SCART" "$BASE/api/v1/shop/cart")
+[ "$(jget "$SCART2" "len(d.get('items',[]))")" = "0" ] && ok "корзина магазина очищена после заказа" || bad "корзина магазина не очищена"
+
+# мои посылки: без токена → 401, под пользователем виден заказ
+[ "$(code "$BASE/api/v1/shop/orders")" = "401" ] && ok "/shop/orders без токена → 401" || bad "/shop/orders без токена не 401"
+SUEMAIL="e2e-shopuser-$$-$RANDOM@kitsune.tea"
+SUREG=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"email\":\"$SUEMAIL\",\"password\":\"secret123\",\"consent_personal_data\":true}" "$BASE/api/v1/auth/register")
+SUTOKEN=$(jget "$SUREG" "d.get('session_token','')")
+SUCART="e2e-shopu-$$-$RANDOM"
+curl -s -X POST -H "Content-Type: application/json" -H "X-Shop-Cart-Id: $SUCART" -d "{\"product_id\":\"$SPID\",\"quantity\":1}" "$BASE/api/v1/shop/cart/items" >/dev/null
+curl -s -X POST -H "Content-Type: application/json" -H "X-Shop-Cart-Id: $SUCART" -H "Authorization: Bearer $SUTOKEN" -d '{"customer":"E2E","phone":"+7","email":"u@kitsune.tea","city":"Казань","address":"ул. 1"}' "$BASE/api/v1/shop/checkout" >/dev/null
+SMYORD=$(curl -s "$BASE/api/v1/shop/orders" -H "Authorization: Bearer $SUTOKEN")
+[ "$(jget "$SMYORD" "len(d)")" -ge 1 ] 2>/dev/null && ok "заказ магазина привязан к пользователю (Мои посылки)" || bad "история посылок пуста" "$SMYORD"
+
+# админка магазина: 403 под обычным пользователем, обновление товара и отправка
+[ "$(code "$BASE/api/v1/admin/shop/orders" -H "Authorization: Bearer $SUTOKEN")" = "403" ] && ok "/admin/shop под пользователем → 403" || bad "/admin/shop под user не 403"
+SUP=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $ADMTOKEN" -d "{\"price_cents\":54000,\"stock_qty\":$SSTOCK1,\"available\":true}" "$BASE/api/v1/admin/shop/products/$SPID")
+[ "$(jget "$SUP" "d.get('available')")" = "True" ] && ok "админ редактирует товар магазина (цена/остаток)" || bad "обновление товара магазина не сработало" "$SUP"
+SSHIP=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $ADMTOKEN" -d '{"status":"shipped"}' "$BASE/api/v1/admin/shop/orders/$SOID/status")
+[ "$(jget "$SSHIP" "d.get('status')")" = "shipped" ] && ok "админ отправляет заказ магазина (shipped)" || bad "смена статуса заказа магазина не сработала" "$SSHIP"
+[ -n "$(jget "$SSHIP" "d.get('tracking_code','')")" ] && [ "$(jget "$SSHIP" "d.get('tracking_code','')")" != "__ERR__" ] && ok "трек-номер сгенерирован при отправке" || bad "трек-номер не сгенерирован"
+
+# страницы магазина отдаются
+page "/shop.html"; page "/shop-cart.html"
+
 # ---------- итог ----------
 printf "\n${c_bold}Итого:${c_off} ${c_green}%d прошло${c_off}, " "$PASS"
 if [ "$FAIL" -eq 0 ]; then

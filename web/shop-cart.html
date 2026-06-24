@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Корзина магазина — КИЦУНЭ</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Lora:wght@500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/kitsune.css">
+</head>
+<body>
+
+<div class="utility">
+  <div class="container">
+    <span class="utility__hours">🛍️ Чайный магазин · доставка по всей России</span>
+    <div class="utility__right">
+      <a href="shop.html">← В магазин</a>
+      <a href="account.html">Личный кабинет</a>
+    </div>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="container nav">
+    <a class="brand" href="index.html" aria-label="КИЦУНЭ — на главную">
+      <img class="brand__logo" src="assets/logo.svg" alt="КИЦУНЭ — Дом чая" width="46" height="46">
+      <span class="brand__name">КИЦУНЭ<small>ЧАЙНЫЙ МАГАЗИН</small></span>
+    </a>
+    <nav class="nav__links" aria-label="Основная навигация">
+      <a href="index.html">Чайный дом</a>
+      <a href="menu-tea.html">Чайная карта</a>
+      <a href="shop.html">Магазин</a>
+      <a href="about.html">О нас</a>
+      <a href="contacts.html">Контакты</a>
+    </nav>
+    <div class="nav__actions">
+      <a class="icon-btn" href="shop-cart.html" aria-label="Корзина магазина" style="border-color:var(--accent);color:var(--accent)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h2.2l2.1 12.4a1.6 1.6 0 0 0 1.6 1.3h9a1.6 1.6 0 0 0 1.6-1.3L21 7H6"/></svg>
+        <span class="count" data-shop-cart-count data-empty="1">0</span>
+      </a>
+      <button class="nav__burger" data-burger aria-label="Открыть меню"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<div class="drawer" data-drawer>
+  <div class="drawer__scrim" data-drawer-close></div>
+  <nav class="drawer__panel" aria-label="Мобильное меню">
+    <button class="drawer__close" data-drawer-close aria-label="Закрыть">✕</button>
+    <a href="index.html">Чайный дом · кафе</a>
+    <a href="shop.html">Чайный магазин</a>
+    <a href="shop-cart.html" class="is-active">Корзина магазина</a>
+    <a href="account.html">Личный кабинет</a>
+  </nav>
+</div>
+
+<section class="page-hero">
+  <div class="container">
+    <div class="crumbs reveal"><a href="shop.html">Магазин</a> &nbsp;/&nbsp; Корзина</div>
+    <h1 class="h2 reveal reveal-d1">Корзина магазина</h1>
+  </div>
+</section>
+
+<section class="section section--tight">
+  <div class="container">
+    <!-- пустая -->
+    <div class="empty" id="cart-empty" style="display:none">
+      <div class="zh">空</div>
+      <h3 class="h3" style="margin-top:8px">Корзина пуста</h3>
+      <p class="muted" style="margin-bottom:22px">Загляните в магазин — у нас редкий чай прямого привоза.</p>
+      <a class="btn btn--lg" href="shop.html">В магазин</a>
+    </div>
+
+    <!-- успешный заказ -->
+    <div class="card" id="order-ok" style="display:none;padding:28px;background:var(--sage-tint);color:var(--sage-600)">
+      <h3 class="h3" style="margin-bottom:8px">Заказ оформлен ✓</h3>
+      <p id="order-ok-text"></p>
+      <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap">
+        <a class="btn" href="account.html">Мои посылки</a>
+        <a class="btn btn--ghost" href="shop.html">Продолжить покупки</a>
+      </div>
+    </div>
+
+    <div class="split" id="cart-body" style="align-items:start;display:none">
+      <!-- позиции -->
+      <div class="stack-md">
+        <div id="cart-items"></div>
+      </div>
+
+      <!-- оформление -->
+      <form class="card reveal" id="checkout-form" style="padding:28px" novalidate>
+        <h3 class="h3" style="margin-bottom:6px">Доставка по России</h3>
+        <p class="muted" style="font-size:13px;margin-bottom:18px">Бесплатно от 3000 ₽, иначе 350 ₽.</p>
+
+        <div class="summary__row" style="padding:8px 0"><span>Товары</span><b id="sum-items">—</b></div>
+        <div class="summary__row" style="padding:8px 0"><span>Доставка</span><b id="sum-ship">—</b></div>
+        <div class="summary__row" style="padding:12px 0;border-top:1px solid var(--line-soft);font-size:18px"><span><b>Итого</b></span><b id="sum-total" class="price">—</b></div>
+
+        <div class="form-grid" style="margin-top:18px">
+          <div class="field"><label>Имя и фамилия <span class="req">*</span></label><input type="text" id="c-name" required></div>
+          <div class="field"><label>Телефон <span class="req">*</span></label><input type="tel" id="c-phone" placeholder="+7 ___ ___-__-__" required></div>
+        </div>
+        <div class="field" style="margin-top:14px"><label>Email</label><input type="email" id="c-email" placeholder="you@mail.ru"></div>
+        <div class="form-grid" style="margin-top:14px">
+          <div class="field"><label>Регион / область</label><input type="text" id="c-region" placeholder="напр. Татарстан"></div>
+          <div class="field"><label>Город <span class="req">*</span></label><input type="text" id="c-city" required></div>
+        </div>
+        <div class="form-grid" style="margin-top:14px">
+          <div class="field"><label>Адрес (улица, дом, кв.) <span class="req">*</span></label><input type="text" id="c-address" required></div>
+          <div class="field"><label>Индекс</label><input type="text" id="c-postal" placeholder="100000"></div>
+        </div>
+        <div class="field" style="margin-top:14px"><label>Комментарий</label><textarea id="c-comment" placeholder="Пожелания к заказу"></textarea></div>
+
+        <button class="btn btn--lg btn--block" type="submit" style="margin-top:20px">Оформить и оплатить</button>
+        <p class="muted" style="font-size:12px;margin-top:10px">Оплата — демонстрационная (mock). Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© 2024–2026 КИЦУНЭ · Чайный магазин.</span>
+      <span>Доставка по России · бесплатно от 3000 ₽</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/kitsune.js"></script>
+<script src="js/shop.js"></script>
+<script>
+(function(){
+  const FREE = 3000, FLAT = 350; // ₽
+  const rub = n => new Intl.NumberFormat('ru-RU').format(Math.round(n));
+  const itemsBox = document.getElementById('cart-items');
+  const body = document.getElementById('cart-body');
+  const emptyBox = document.getElementById('cart-empty');
+
+  function row(it){
+    return `<div class="card" data-id="${it.product_id}" style="padding:18px;display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:12px">
+      <div>
+        <b style="font-family:var(--font-head);font-size:16px">${it.name}</b>
+        <div class="card__meta" style="margin-top:4px">${rub(it.unit_price_cents/100)} ₽ × ${it.quantity}${it.stock_qty<=it.quantity?' · макс. на складе':''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn btn--ghost btn--sm" data-dec="${it.product_id}">−</button>
+          <b>${it.quantity}</b>
+          <button class="btn btn--ghost btn--sm" data-inc="${it.product_id}" ${it.quantity>=it.stock_qty?'disabled':''}>+</button>
+        </div>
+        <b class="price" style="min-width:90px;text-align:right">${rub(it.subtotal_cents/100)} ₽</b>
+      </div>
+    </div>`;
+  }
+
+  async function render(){
+    let cart; try{ cart = await KitsuneShop.cart(); }catch(e){ cart={items:[]}; }
+    const items = cart.items||[];
+    if(!items.length){ body.style.display='none'; emptyBox.style.display=''; kitsuneShopBadge(); return; }
+    emptyBox.style.display='none'; body.style.display='';
+    itemsBox.innerHTML = items.map(row).join('');
+    const sub = (cart.total_cents||0)/100;
+    const ship = sub>=FREE ? 0 : FLAT;
+    document.getElementById('sum-items').textContent = rub(sub)+' ₽';
+    document.getElementById('sum-ship').textContent = ship? (rub(ship)+' ₽') : 'бесплатно';
+    document.getElementById('sum-total').textContent = rub(sub+ship)+' ₽';
+    kitsuneShopBadge();
+  }
+
+  itemsBox.addEventListener('click', async e=>{
+    const inc=e.target.closest('[data-inc]'), dec=e.target.closest('[data-dec]');
+    if(inc){ await KitsuneShop.add(inc.dataset.inc,1); render(); }
+    if(dec){ await KitsuneShop.del(dec.dataset.dec,1); render(); }
+  });
+
+  document.getElementById('checkout-form').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const v = id => (document.getElementById(id).value||'').trim();
+    const need=['c-name','c-phone','c-city','c-address'];
+    let ok=true; need.forEach(id=>{ const el=document.getElementById(id); if(!el.value.trim()){ el.style.borderColor='var(--clay)'; ok=false;} else el.style.borderColor=''; });
+    if(!ok){ kitsuneToast('Заполните имя, телефон, город и адрес'); return; }
+    const btn=e.target.querySelector('button[type=submit]'); btn.disabled=true; btn.textContent='Оформляем…';
+    try{
+      const res = await KitsuneShop.checkout({
+        customer:v('c-name'), phone:v('c-phone'), email:v('c-email'),
+        country:'Россия', region:v('c-region'), city:v('c-city'),
+        address:v('c-address'), postal_code:v('c-postal'), comment:v('c-comment')
+      });
+      const d = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(d.error || ('HTTP '+res.status));
+      const no = 'KT-'+(d.id||'').slice(0,8).toUpperCase();
+      body.style.display='none';
+      document.getElementById('order-ok-text').textContent =
+        'Номер заказа '+no+'. Сумма '+rub((d.total_cents||0)/100)+' ₽ (товары '+rub((d.items_subtotal_cents||0)/100)+' ₽ + доставка '+(d.delivery_cents? rub(d.delivery_cents/100)+' ₽':'бесплатно')+'). Трек-номер появится после отправки — в разделе «Мои посылки».';
+      document.getElementById('order-ok').style.display='';
+      kitsuneShopBadge();
+      kitsuneToast('Заказ оформлен');
+    }catch(err){
+      kitsuneToast('Не удалось оформить: '+err.message);
+      btn.disabled=false; btn.textContent='Оформить и оплатить';
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

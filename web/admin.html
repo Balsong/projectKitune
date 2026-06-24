@@ -32,6 +32,7 @@
       <a href="menu-tea.html">Чайная карта</a>
       <a href="menu-kitchen.html">Напитки</a>
       <a href="account.html">Кабинет</a>
+          <a href="shop.html">Магазин</a>
     </nav>
     <div class="nav__actions">
       <button class="btn btn--ghost btn--sm" id="logout-btn">Выйти</button>
@@ -66,6 +67,8 @@
       <button class="chip is-active" data-tab="menu">Меню</button>
       <button class="chip" data-tab="orders">Заказы</button>
       <button class="chip" data-tab="bookings">Брони</button>
+      <button class="chip" data-tab="shop-products">Магазин · товары</button>
+      <button class="chip" data-tab="shop-orders">Магазин · заказы</button>
     </div>
 
     <!-- MENU -->
@@ -104,6 +107,31 @@
         </div>
       </div>
     </div>
+
+    <!-- SHOP PRODUCTS -->
+    <div data-panel="shop-products" style="display:none">
+      <div class="card reveal" style="padding:0;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table class="admin-table" id="shop-products-table">
+            <thead><tr><th>Товар</th><th>Категория</th><th>Цена, ₽</th><th>Остаток</th><th>В продаже</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHOP ORDERS -->
+    <div data-panel="shop-orders" style="display:none">
+      <div class="card reveal" style="padding:0;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table class="admin-table" id="shop-orders-table">
+            <thead><tr><th>Заказ</th><th>Покупатель</th><th>Доставка</th><th>Сумма, ₽</th><th>Статус</th><th>Трек</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="muted" style="font-size:13px;margin-top:12px">«Отправить» присвоит трек-номер автоматически (если поле пустое) и уведомит покупателя.</p>
+    </div>
   </div>
 </section>
 
@@ -127,6 +155,7 @@
 
 <script src="js/catalog.js"></script>
 <script src="js/kitsune.js"></script>
+<script src="js/shop.js"></script>
 <script>
 (async function(){
   const rub = n => new Intl.NumberFormat('ru-RU').format(Math.round(n));
@@ -225,7 +254,74 @@
     btn.disabled=false;
   });
 
-  loadMenu(); loadOrders(); loadBookings();
+  /* ---------- МАГАЗИН · ТОВАРЫ ---------- */
+  const aHeaders = () => Object.assign({'Content-Type':'application/json'}, KitsuneAuth.headers());
+  const SHOP_CAT={puer:'Пуэр',oolong:'Улун',red:'Красный',white:'Белый',green:'Зелёный',teaware:'Посуда',gift:'Наборы'};
+  const spBody=document.querySelector('#shop-products-table tbody');
+  async function loadShopProducts(){
+    let items=[]; try{ items=await fetch('/api/v1/admin/shop/products',{headers:KitsuneAuth.headers()}).then(r=>r.json()); }catch(e){ items=[]; }
+    spBody.innerHTML = items.length ? items.map(p=>`
+      <tr data-id="${p.id}">
+        <td class="name">${p.name}<br><span class="muted" style="font-size:12px">${p.sku||''} · ${p.unit||''}</span></td>
+        <td class="muted">${SHOP_CAT[p.category]||p.category}</td>
+        <td><input type="number" min="0" step="1" value="${Math.round((p.price_cents||0)/100)}" data-price></td>
+        <td><input type="number" min="0" step="1" value="${p.stock_qty}" data-stock></td>
+        <td><label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" ${p.available?'checked':''} data-avail> <span class="muted" style="font-size:12px">в продаже</span></label></td>
+        <td><button class="btn btn--sm" data-save>Сохранить</button></td>
+      </tr>`).join('') : '<tr><td colspan="6" class="muted" style="text-align:center;padding:28px">Товаров нет</td></tr>';
+  }
+  spBody.addEventListener('click', async e=>{
+    const btn=e.target.closest('[data-save]'); if(!btn) return;
+    const tr=btn.closest('tr'); const id=tr.dataset.id;
+    const price=Math.max(0,parseInt(tr.querySelector('[data-price]').value,10)||0)*100;
+    const stock=Math.max(0,parseInt(tr.querySelector('[data-stock]').value,10)||0);
+    const avail=tr.querySelector('[data-avail]').checked;
+    btn.disabled=true; btn.textContent='…';
+    try{
+      const r=await fetch('/api/v1/admin/shop/products/'+id,{method:'POST',headers:aHeaders(),body:JSON.stringify({price_cents:price,stock_qty:stock,available:avail})});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      kitsuneToast('Товар обновлён'); btn.textContent='Сохранено ✓';
+      setTimeout(()=>{ btn.textContent='Сохранить'; btn.disabled=false; },1200);
+    }catch(err){ kitsuneToast('Не удалось сохранить'); btn.textContent='Сохранить'; btn.disabled=false; }
+  });
+
+  /* ---------- МАГАЗИН · ЗАКАЗЫ ---------- */
+  const SHOP_OS={created:'Создан',paid:'Оплачен',shipped:'Отправлен',delivered:'Доставлен',cancelled:'Отменён'};
+  const soBody=document.querySelector('#shop-orders-table tbody');
+  async function loadShopOrders(){
+    let list=[]; try{ list=await fetch('/api/v1/admin/shop/orders',{headers:KitsuneAuth.headers()}).then(r=>r.json()); }catch(e){ list=[]; }
+    soBody.innerHTML = list.length ? list.map(o=>{
+      const where=[o.city,o.address].filter(Boolean).join(', ');
+      return `<tr data-id="${o.id}">
+        <td>KT-${(o.id||'').slice(0,8).toUpperCase()}</td>
+        <td class="name">${o.customer||'—'}<br><span class="muted" style="font-size:12px">${o.phone||''}</span></td>
+        <td class="muted">${where||'—'}</td>
+        <td>${rub((o.total_cents||0)/100)}</td>
+        <td><b data-status>${SHOP_OS[o.status]||o.status}</b></td>
+        <td class="muted" data-track>${o.tracking_code||'—'}</td>
+        <td>
+          <button class="btn btn--sm" data-act="shipped">Отправить</button>
+          <button class="btn btn--ghost btn--sm" data-act="delivered">Доставлен</button>
+        </td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="7" class="muted" style="text-align:center;padding:28px">Заказов нет</td></tr>';
+  }
+  soBody.addEventListener('click', async e=>{
+    const btn=e.target.closest('[data-act]'); if(!btn) return;
+    const tr=btn.closest('tr'); const id=tr.dataset.id; const status=btn.dataset.act;
+    btn.disabled=true;
+    try{
+      const r=await fetch('/api/v1/admin/shop/orders/'+id+'/status',{method:'POST',headers:aHeaders(),body:JSON.stringify({status})});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const o=await r.json();
+      tr.querySelector('[data-status]').textContent=SHOP_OS[o.status]||o.status;
+      tr.querySelector('[data-track]').textContent=o.tracking_code||'—';
+      kitsuneToast('Статус заказа обновлён');
+    }catch(err){ kitsuneToast('Не удалось обновить'); }
+    btn.disabled=false;
+  });
+
+  loadMenu(); loadOrders(); loadBookings(); loadShopProducts(); loadShopOrders();
 })();
 </script>
 </body>
