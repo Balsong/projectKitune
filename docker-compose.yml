@@ -223,6 +223,33 @@ services:
     networks:
       - tea-network
 
+  shop-svc:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        SERVICE: shop-svc
+    container_name: shop-svc
+    environment:
+      GRPC_PORT: "9096"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: dev
+      DB_PASSWORD: dev
+      DB_NAME: tea_platform   # maintenance-БД для CREATE DATABASE tea_shop
+      SHOP_DB_NAME: tea_shop
+      KAFKA_BROKERS: kafka:9092
+    ports:
+      - "9098:9096" # на хосте 9096/9097 заняты booking
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - tea-network
+
   api-gateway:
     build:
       context: .
@@ -238,6 +265,7 @@ services:
       DELIVERY_ADDR: delivery-svc:9093
       ACCOUNT_ADDR: account-svc:9094
       BOOKING_ADDR: booking-svc:9095
+      SHOP_ADDR: shop-svc:9096
       KAFKA_BROKERS: kafka:9092
     ports:
       - "8080:8080"
@@ -253,6 +281,8 @@ services:
       account-svc:
         condition: service_started
       booking-svc:
+        condition: service_started
+      shop-svc:
         condition: service_started
       kafka:
         condition: service_healthy

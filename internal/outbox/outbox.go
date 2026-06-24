@@ -21,6 +21,7 @@ const (
 	SourcePayment   = "payment-svc"
 	SourceDelivery  = "delivery-svc"
 	SourceBooking   = "booking-svc"
+	SourceShop      = "shop-svc"
 )
 
 // Repo — доступ к таблице outbox.

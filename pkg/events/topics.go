@@ -8,6 +8,7 @@ const (
 	TopicInventory     = "inventory.events"
 	TopicNotifications = "notifications.commands"
 	TopicDelivery      = "delivery.events"
+	TopicShop          = "shop.events"
 )
 
 // Типы событий.
@@ -37,4 +38,9 @@ const (
 	EventDeliveryDispatched = "delivery.dispatched"
 	// EventDeliveryDelivered — заказ доставлен (заказ переходит в completed).
 	EventDeliveryDelivered = "delivery.delivered"
+
+	// EventShopOrderPaid — заказ магазина оплачен (mock-оплата при checkout).
+	EventShopOrderPaid = "shop.order.paid"
+	// EventShopOrderShipped — заказ магазина отправлен (трек-номер).
+	EventShopOrderShipped = "shop.order.shipped"
 )

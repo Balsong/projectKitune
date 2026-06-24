@@ -19,6 +19,7 @@ import (
 	catalogv1 "tea-platform/internal/genpb/catalog/v1"
 	deliveryv1 "tea-platform/internal/genpb/delivery/v1"
 	orderv1 "tea-platform/internal/genpb/order/v1"
+	shopv1 "tea-platform/internal/genpb/shop/v1"
 	"tea-platform/internal/metrics"
 	"tea-platform/pkg/response"
 )
@@ -101,6 +102,18 @@ func main() {
 	defer func() { _ = bookingConn.Close() }()
 	bookingClient := bookingv1.NewBookingServiceClient(bookingConn)
 
+	// gRPC-клиент к Shop Service (отдельный интернет-магазин).
+	shopConn, err := grpc.NewClient(
+		cfg.ShopAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Error("не удалось создать gRPC-клиент Shop", "error", err)
+		os.Exit(1)
+	}
+	defer func() { _ = shopConn.Close() }()
+	shopClient := shopv1.NewShopServiceClient(shopConn)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler)
 	mux.HandleFunc("/api/v1/menu", handleGetMenu(log, catalogClient))
@@ -120,11 +133,25 @@ func main() {
 	mux.HandleFunc("GET /api/v1/orders/{id}", handleGetOrder(log, orderClient))
 	mux.HandleFunc("GET /api/v1/orders/{id}/delivery", handleGetDelivery(log, deliveryClient))
 
+	// Интернет-магазин чая (отдельный контекст, доставка по стране).
+	mux.HandleFunc("GET /api/v1/shop/menu", handleShopMenu(log, shopClient))
+	mux.HandleFunc("GET /api/v1/shop/cart", handleShopCart(log, shopClient))
+	mux.HandleFunc("POST /api/v1/shop/cart/items", handleShopAddToCart(log, shopClient))
+	mux.HandleFunc("DELETE /api/v1/shop/cart/items", handleShopRemoveFromCart(log, shopClient))
+	mux.HandleFunc("POST /api/v1/shop/cart/clear", handleShopClearCart(log, shopClient))
+	mux.HandleFunc("POST /api/v1/shop/checkout", handleShopCheckout(log, accountClient, shopClient))
+	mux.HandleFunc("GET /api/v1/shop/orders", handleShopMyOrders(log, accountClient, shopClient))
+	mux.HandleFunc("GET /api/v1/shop/orders/{id}", handleShopGetOrder(log, shopClient))
+
 	// Админка (требует роль admin; проверка внутри хендлеров).
 	mux.HandleFunc("GET /api/v1/admin/orders", handleAdminOrders(log, accountClient, orderClient))
 	mux.HandleFunc("GET /api/v1/admin/bookings", handleAdminBookings(log, accountClient, bookingClient))
 	mux.HandleFunc("POST /api/v1/admin/bookings/{id}/status", handleAdminUpdateBooking(log, accountClient, bookingClient))
 	mux.HandleFunc("POST /api/v1/admin/menu/{id}", handleAdminUpdateProduct(log, accountClient, catalogClient))
+	mux.HandleFunc("GET /api/v1/admin/shop/products", handleAdminShopProducts(log, accountClient, shopClient))
+	mux.HandleFunc("POST /api/v1/admin/shop/products/{id}", handleAdminShopUpdateProduct(log, accountClient, shopClient))
+	mux.HandleFunc("GET /api/v1/admin/shop/orders", handleAdminShopOrders(log, accountClient, shopClient))
+	mux.HandleFunc("POST /api/v1/admin/shop/orders/{id}/status", handleAdminShopUpdateOrder(log, accountClient, shopClient))
 
 	// Аккаунт: регистрация, вход, текущий пользователь, выход.
 	// Чувствительные маршруты под rate-limit по IP (барьер от брутфорса).

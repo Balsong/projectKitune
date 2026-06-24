@@ -28,7 +28,7 @@ func main() {
 	// Гарантируем существование топиков до запуска консьюмеров (иначе гонка
 	// с авто-созданием топика на стороне продюсера).
 	if err := kafka.EnsureTopics(ctx, cfg.KafkaBrokers,
-		events.TopicBookings, events.TopicOrders, events.TopicInventory, events.TopicPayments, events.TopicDelivery); err != nil {
+		events.TopicBookings, events.TopicOrders, events.TopicInventory, events.TopicPayments, events.TopicDelivery, events.TopicShop); err != nil {
 		log.Error("не удалось создать топики", "error", err)
 		os.Exit(1)
 	}
@@ -45,6 +45,7 @@ func main() {
 		{events.TopicInventory, "notification-svc-inventory", handleInventory(log)},
 		{events.TopicPayments, "notification-svc-payments", handlePayment(log)},
 		{events.TopicDelivery, "notification-svc-delivery", handleDelivery(log)},
+		{events.TopicShop, "notification-svc-shop", handleShop(log)},
 	}
 
 	var wg sync.WaitGroup
@@ -163,6 +164,33 @@ func handlePayment(log *slog.Logger) kafka.HandlerFunc {
 			log.Warn("📨 уведомление: оплата отклонена 💳",
 				"order_id", p.OrderID, "amount_cents", p.AmountCents,
 				"reason", p.Reason, "correlation_id", env.CorrelationID)
+		}
+		return nil
+	}
+}
+
+// handleShop «отправляет» уведомление по заказам интернет-магазина.
+func handleShop(log *slog.Logger) kafka.HandlerFunc {
+	return func(_ context.Context, env events.Envelope) error {
+		var p struct {
+			OrderID      string `json:"order_id"`
+			Customer     string `json:"customer"`
+			Email        string `json:"email"`
+			TotalCents   int64  `json:"total_cents"`
+			TrackingCode string `json:"tracking_code"`
+		}
+		if err := env.UnmarshalPayload(&p); err != nil {
+			return err
+		}
+		switch env.EventType {
+		case events.EventShopOrderPaid:
+			log.Info("📨 уведомление: заказ магазина оплачен 🛍️",
+				"order_id", p.OrderID, "customer", p.Customer, "email", p.Email,
+				"total_cents", p.TotalCents, "correlation_id", env.CorrelationID)
+		case events.EventShopOrderShipped:
+			log.Info("📨 уведомление: посылка отправлена 📦",
+				"order_id", p.OrderID, "tracking", p.TrackingCode,
+				"email", p.Email, "correlation_id", env.CorrelationID)
 		}
 		return nil
 	}

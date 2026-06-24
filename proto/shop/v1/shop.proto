@@ -1,0 +1,162 @@
+syntax = "proto3";
+
+package shop.v1;
+
+option go_package = "tea-platform/internal/genpb/shop/v1;shopv1";
+
+// ShopService — отдельный интернет-магазин чая (своя БД tea_shop, доставка по
+// стране). Не пересекается с ресторанным контекстом: свой каталог, корзина,
+// заказы и реальный складской остаток.
+service ShopService {
+  // Каталог.
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+  rpc GetProduct(GetProductRequest) returns (Product);
+
+  // Корзина (изолированная от ресторанной).
+  rpc GetCart(CartRequest) returns (Cart);
+  rpc AddToCart(AddToCartRequest) returns (Cart);
+  rpc RemoveFromCart(RemoveFromCartRequest) returns (Cart);
+  rpc ClearCart(CartRequest) returns (Cart);
+
+  // Оформление и заказы.
+  rpc Checkout(CheckoutRequest) returns (Order);
+  rpc GetOrder(GetOrderRequest) returns (Order);
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
+
+  // Админка.
+  rpc UpdateProduct(UpdateProductRequest) returns (Product);
+  rpc ListAllOrders(ListAllOrdersRequest) returns (ListOrdersResponse);
+  rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (Order);
+}
+
+// Product — товар магазина (рассыпной чай, посуда, наборы) с реальным остатком.
+message Product {
+  string id = 1;
+  string sku = 2;
+  string name = 3;
+  string description = 4;
+  string category = 5; // puer | oolong | red | white | green | teaware | gift
+  int64 price_cents = 6;
+  string currency = 7;
+  int32 weight_grams = 8;
+  string unit = 9; // «50 г», «357 г (блин)», «1 шт»
+  string image_url = 10;
+  int32 stock_qty = 11; // реальный складской остаток
+  bool available = 12;
+}
+
+message ListProductsRequest {
+  string category = 1; // пусто — все
+}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+}
+
+message GetProductRequest {
+  string id = 1;
+}
+
+message CartItem {
+  string product_id = 1;
+  string sku = 2;
+  string name = 3;
+  int32 quantity = 4;
+  int64 unit_price_cents = 5;
+  int64 subtotal_cents = 6;
+  int32 stock_qty = 7; // остаток для проверки доступности
+}
+
+message Cart {
+  string cart_id = 1;
+  repeated CartItem items = 2;
+  int64 total_cents = 3;
+}
+
+message CartRequest {
+  string cart_id = 1;
+}
+
+message AddToCartRequest {
+  string cart_id = 1;
+  string product_id = 2;
+  int32 quantity = 3;
+}
+
+message RemoveFromCartRequest {
+  string cart_id = 1;
+  string product_id = 2;
+  int32 quantity = 3;
+}
+
+message OrderItem {
+  string product_id = 1;
+  string name = 2;
+  int32 quantity = 3;
+  int64 unit_price_cents = 4;
+  int64 subtotal_cents = 5;
+}
+
+message Order {
+  string id = 1;
+  string user_id = 2;
+  string status = 3; // created | paid | shipped | delivered | cancelled
+  string customer = 4;
+  string phone = 5;
+  string email = 6;
+  string country = 7;
+  string region = 8;
+  string city = 9;
+  string address = 10;
+  string postal_code = 11;
+  string comment = 12;
+  int64 items_subtotal_cents = 13;
+  int64 delivery_cents = 14;
+  int64 total_cents = 15;
+  string tracking_code = 16;
+  repeated OrderItem items = 17;
+  string created_at = 18;
+}
+
+message CheckoutRequest {
+  string cart_id = 1;
+  string user_id = 2; // пусто для гостя
+  string customer = 3;
+  string phone = 4;
+  string email = 5;
+  string country = 6;
+  string region = 7;
+  string city = 8;
+  string address = 9;
+  string postal_code = 10;
+  string comment = 11;
+}
+
+message GetOrderRequest {
+  string id = 1;
+}
+
+message ListOrdersRequest {
+  string user_id = 1;
+}
+
+message ListOrdersResponse {
+  repeated Order orders = 1;
+}
+
+message ListAllOrdersRequest {
+  int32 limit = 1;
+}
+
+message UpdateProductRequest {
+  string id = 1;
+  int64 price_cents = 2;
+  int32 stock_qty = 3;
+  bool available = 4;
+}
+
+message UpdateOrderStatusRequest {
+  string id = 1;
+  string status = 2;
+  string tracking_code = 3;
+}

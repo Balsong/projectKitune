@@ -18,6 +18,7 @@ type Config struct {
 	DeliveryAddr string // адрес gRPC Delivery для клиентов (api-gateway)
 	AccountAddr  string // адрес gRPC Account для клиентов (api-gateway)
 	BookingAddr  string // адрес gRPC Booking для клиентов (api-gateway)
+	ShopAddr     string // адрес gRPC Shop для клиентов (api-gateway)
 	DBHost       string
 	DBPort       string
 	DBUser       string
@@ -26,6 +27,13 @@ type Config struct {
 	KafkaBrokers string
 	RedisAddr    string
 	AdminEmails  string // список e-mail админов через запятую (бутстрап роли)
+
+	// ShopDBName — имя отдельной БД интернет-магазина (свой контекст).
+	ShopDBName string
+	// ShopShipFlatCents — единый тариф доставки магазина по стране (копейки).
+	ShopShipFlatCents int64
+	// ShopShipFreeThresholdCents — порог бесплатной доставки (копейки).
+	ShopShipFreeThresholdCents int64
 
 	// PaymentLimitCents — порог mock-оплаты: заказы дороже отклоняются
 	// («превышен лимит карты»). Позволяет демонстрировать компенсацию саги.
@@ -44,6 +52,7 @@ func Load() *Config {
 		DeliveryAddr: getEnv("DELIVERY_ADDR", "delivery-svc:9093"),
 		AccountAddr:  getEnv("ACCOUNT_ADDR", "account-svc:9094"),
 		BookingAddr:  getEnv("BOOKING_ADDR", "booking-svc:9095"),
+		ShopAddr:     getEnv("SHOP_ADDR", "shop-svc:9096"),
 		DBHost:       getEnv("DB_HOST", "postgres"),
 		DBPort:       getEnv("DB_PORT", "5432"),
 		DBUser:       getEnv("DB_USER", "dev"),
@@ -52,6 +61,10 @@ func Load() *Config {
 		KafkaBrokers: getEnv("KAFKA_BROKERS", "kafka:9092"),
 		RedisAddr:    getEnv("REDIS_ADDR", "redis:6379"),
 		AdminEmails:  getEnv("ADMIN_EMAILS", ""),
+
+		ShopDBName:                 getEnv("SHOP_DB_NAME", "tea_shop"),
+		ShopShipFlatCents:          getEnvInt64("SHOP_SHIP_FLAT_CENTS", 35_000),  // 350 ₽
+		ShopShipFreeThresholdCents: getEnvInt64("SHOP_SHIP_FREE_CENTS", 300_000), // 3000 ₽
 
 		PaymentLimitCents: getEnvInt64("PAYMENT_LIMIT_CENTS", 1_000_000), // 10 000 ₽
 	}
@@ -66,11 +79,26 @@ func getEnvInt64(key string, fallback int64) int64 {
 	return fallback
 }
 
-// DSN формирует строку подключения к PostgreSQL для pgx.
+// DSN формирует строку подключения к основной БД (tea_platform) для pgx.
 func (c *Config) DSN() string {
+	return c.dsnFor(c.DBName)
+}
+
+// ShopDSN — строка подключения к отдельной БД магазина (tea_shop).
+func (c *Config) ShopDSN() string {
+	return c.dsnFor(c.ShopDBName)
+}
+
+// MaintenanceDSN — подключение к основной БД для административных операций
+// (например, CREATE DATABASE для tea_shop при первом старте shop-svc).
+func (c *Config) MaintenanceDSN() string {
+	return c.dsnFor(c.DBName)
+}
+
+func (c *Config) dsnFor(dbName string) string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		c.DBUser, c.DBPassword, c.DBHost, c.DBPort, c.DBName,
+		c.DBUser, c.DBPassword, c.DBHost, c.DBPort, dbName,
 	)
 }
 
