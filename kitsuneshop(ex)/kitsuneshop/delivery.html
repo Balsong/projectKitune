@@ -5,17 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Доставка и самовывоз — КИЦУНЭ</title>
 <meta name="description" content="Доставка КИЦУНЭ: курьер, Яндекс Еда и самовывоз. Зоны, сроки и условия.">
-<link rel="canonical" href="https://kitsune.tea/delivery.html">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="КИЦУНЭ — Дом чая">
-<meta property="og:locale" content="ru_RU">
-<meta property="og:title" content="Доставка и самовывоз — КИЦУНЭ">
-<meta property="og:description" content="Доставка КИЦУНЭ: курьер, Яндекс Еда и самовывоз. Зоны, сроки и условия.">
-<meta property="og:url" content="https://kitsune.tea/delivery.html">
-<meta property="og:image" content="https://kitsune.tea/assets/logo.svg">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Доставка и самовывоз — КИЦУНЭ">
-<meta name="twitter:description" content="Доставка КИЦУНЭ: курьер, Яндекс Еда и самовывоз. Зоны, сроки и условия.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Lora:wght@500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -26,28 +15,28 @@
 <header class="site-header">
   <div class="container nav">
     <a class="brand" href="index.html" aria-label="КИЦУНЭ — на главную">
-      <img class="brand__logo" src="assets/logo.svg" alt="КИЦУНЭ — Дом чая" width="46" height="46">
+      <img class="brand__logo" src="assets/logo.png" alt="КИЦУНЭ — Дом чая" width="46" height="46">
       <span class="brand__name">КИЦУНЭ<small>ДОМ ЧАЯ · EST 2024</small></span>
     </a>
     <nav class="nav__links" aria-label="Основная навигация">
       <a href="menu-tea.html">Чайная карта</a>
       <a href="menu-kitchen.html">Кухня</a>
+      <a href="shop.html">Магазин</a>
       <a href="promos.html">Акции</a>
       <a href="about.html">О нас</a>
       <a href="contacts.html">Контакты</a>
-      <a href="shop.html">Магазин</a>
     </nav>
     <div class="nav__actions">
       <a class="btn btn--sm" href="reservation.html">Забронировать</a>
       <a class="icon-btn" href="shop-cart.html" aria-label="Корзина магазина" title="Корзина магазина">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.7 7.6 12 12l8.3-4.4M12 12v9"/></svg>
-        <span class="count count--shop" data-shop-cart-count data-empty="1">0</span>
+        <span class="count count--shop" data-shop-count data-empty="1">0</span>
       </a>
-      <a class="icon-btn" href="cart.html" aria-label="Корзина">
+      <a class="icon-btn" href="cart.html" aria-label="Корзина кафе" title="Корзина кафе">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h2.2l2.1 12.4a1.6 1.6 0 0 0 1.6 1.3h9a1.6 1.6 0 0 0 1.6-1.3L21 7H6"/></svg>
         <span class="count" data-cart-count data-empty="1">0</span>
       </a>
-      <a class="icon-btn" href="account.html" aria-label="Личный кабинет">
+      <a class="icon-btn" href="account.html" data-account-icon aria-label="Личный кабинет">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
       </a>
       <button class="nav__burger" data-burger aria-label="Открыть меню"><span></span><span></span><span></span></button>
@@ -61,15 +50,16 @@
     <button class="drawer__close" data-drawer-close aria-label="Закрыть">✕</button>
     <a href="index.html">Главная</a>
     <a href="menu-tea.html">Чайная карта</a>
-    <a href="menu-kitchen.html">Кухня</a>
+    <a href="menu-kitchen.html">Кухня · Блюда</a>
+    <a href="shop.html">Чайный магазин</a>
     <a href="promos.html">Акции</a>
     <a href="about.html">О нас · Атмосфера</a>
     <a href="contacts.html">Контакты</a>
     <a href="reservation.html">Бронирование столика</a>
     <a href="delivery.html" class="is-active">Доставка</a>
-    <a href="cart.html">Корзина</a>
+    <a href="cart.html">Корзина кафе</a>
+    <a href="shop-cart.html">Корзина магазина</a>
     <a href="account.html">Личный кабинет</a>
-    <a href="shop.html">Чайный магазин</a>
   </nav>
 </div>
 
@@ -155,12 +145,12 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a class="brand" href="index.html"><img class="brand__logo" src="assets/logo.svg" alt="КИЦУНЭ — Дом чая" width="46" height="46"><span class="brand__name">КИЦУНЭ<small>ДОМ ЧАЯ · EST 2024</small></span></a>
-        <p style="margin-top:16px;max-width:34ch;font-size:14.5px;color:color-mix(in srgb,var(--paper) 70%, transparent)">Чайный дом и кофейня. Редкий чай прямого привоза, авторские напитки и кофе в Ульяновске.</p>
+        <a class="brand" href="index.html"><img class="brand__logo" src="assets/logo.png" alt="КИЦУНЭ — Дом чая" width="46" height="46"><span class="brand__name">КИЦУНЭ<small>ДОМ ЧАЯ · EST 2024</small></span></a>
+        <p style="margin-top:16px;max-width:34ch;font-size:14.5px;color:color-mix(in srgb,var(--paper) 70%, transparent)">Чайный дом и кафе китайской кухни. Редкий чай прямого привоза, баоцзы, димсамы и WOK в Ульяновске.</p>
         <div class="social"><a href="#">VK</a><a href="#">TG</a><a href="#">OK</a><a href="#">Дзен</a></div>
       </div>
-      <div class="footer-col"><h4>Меню</h4><ul><li><a href="menu-tea.html">Чайная карта</a></li><li><a href="menu-kitchen.html">Кухня</a></li><li><a href="menu-tea.html#drinks">Напитки</a></li><li><a href="menu-kitchen.html#dessert">Десерты</a></li><li><a href="promos.html">Акции</a></li></ul></div>
-      <div class="footer-col"><h4>Гостям</h4><ul><li><a href="reservation.html">Бронирование</a></li><li><a href="delivery.html">Доставка</a></li><li><a href="account.html">Личный кабинет</a></li><li><a href="about.html">О нас</a></li><li><a href="contacts.html">Контакты</a></li></ul></div>
+      <div class="footer-col"><h4>Меню</h4><ul><li><a href="menu-tea.html">Чайная карта</a></li><li><a href="menu-kitchen.html">Кухня · Блюда</a></li><li><a href="shop.html">Чайный магазин</a></li><li><a href="menu-tea.html#drinks">Напитки</a></li><li><a href="menu-kitchen.html#dessert">Десерты</a></li><li><a href="promos.html">Акции</a></li></ul></div>
+      <div class="footer-col"><h4>Гостям</h4><ul><li><a href="reservation.html">Бронирование</a></li><li><a href="delivery.html">Доставка</a></li><li><a href="account.html">Личный кабинет</a></li><li><a href="terms.html">Пользовательское соглашение</a></li><li><a href="about.html">О нас</a></li><li><a href="contacts.html">Контакты</a></li></ul></div>
       <div class="footer-col"><h4>Часы и адрес</h4><p class="footer-hours">Ульяновск, 1-й переулок Мира, 2<br>Ежедневно · 12:00–22:00<br>Чайный клуб · доставка<br><br>★ 4,8 — Яндекс Карты и 2ГИС<br>hello@kitsune.tea</p></div>
     </div>
     <div class="footer-bottom">
@@ -171,7 +161,7 @@
 </footer>
 
 <script src="js/catalog.js"></script>
+<script src="js/shop-catalog.js"></script>
 <script src="js/kitsune.js"></script>
-<script src="js/shop.js"></script>
 </body>
 </html>

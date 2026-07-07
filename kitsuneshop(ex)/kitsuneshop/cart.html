@@ -15,28 +15,28 @@
 <header class="site-header">
   <div class="container nav">
     <a class="brand" href="index.html" aria-label="КИЦУНЭ — на главную">
-      <img class="brand__logo" src="assets/logo.svg" alt="КИЦУНЭ — Дом чая" width="46" height="46">
+      <img class="brand__logo" src="assets/logo.png" alt="КИЦУНЭ — Дом чая" width="46" height="46">
       <span class="brand__name">КИЦУНЭ<small>ДОМ ЧАЯ · EST 2024</small></span>
     </a>
     <nav class="nav__links" aria-label="Основная навигация">
       <a href="menu-tea.html">Чайная карта</a>
       <a href="menu-kitchen.html">Кухня</a>
+      <a href="shop.html">Магазин</a>
       <a href="promos.html">Акции</a>
       <a href="about.html">О нас</a>
       <a href="contacts.html">Контакты</a>
-      <a href="shop.html">Магазин</a>
     </nav>
     <div class="nav__actions">
       <a class="btn btn--sm" href="reservation.html">Забронировать</a>
       <a class="icon-btn" href="shop-cart.html" aria-label="Корзина магазина" title="Корзина магазина">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.7 7.6 12 12l8.3-4.4M12 12v9"/></svg>
-        <span class="count count--shop" data-shop-cart-count data-empty="1">0</span>
+        <span class="count count--shop" data-shop-count data-empty="1">0</span>
       </a>
       <a class="icon-btn" href="cart.html" aria-label="Корзина" style="border-color:var(--accent);color:var(--accent)">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h2.2l2.1 12.4a1.6 1.6 0 0 0 1.6 1.3h9a1.6 1.6 0 0 0 1.6-1.3L21 7H6"/></svg>
         <span class="count" data-cart-count data-empty="1">0</span>
       </a>
-      <a class="icon-btn" href="account.html" aria-label="Личный кабинет">
+      <a class="icon-btn" href="account.html" data-account-icon aria-label="Личный кабинет">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
       </a>
       <button class="nav__burger" data-burger aria-label="Открыть меню"><span></span><span></span><span></span></button>
@@ -50,15 +50,16 @@
     <button class="drawer__close" data-drawer-close aria-label="Закрыть">✕</button>
     <a href="index.html">Главная</a>
     <a href="menu-tea.html">Чайная карта</a>
-    <a href="menu-kitchen.html">Кухня</a>
+    <a href="menu-kitchen.html">Кухня · Блюда</a>
+    <a href="shop.html">Чайный магазин</a>
     <a href="promos.html">Акции</a>
     <a href="about.html">О нас · Атмосфера</a>
     <a href="contacts.html">Контакты</a>
     <a href="reservation.html">Бронирование столика</a>
     <a href="delivery.html">Доставка</a>
-    <a href="cart.html" class="is-active">Корзина</a>
+    <a href="cart.html" class="is-active">Корзина кафе</a>
+    <a href="shop-cart.html">Корзина магазина</a>
     <a href="account.html">Личный кабинет</a>
-    <a href="shop.html">Чайный магазин</a>
   </nav>
 </div>
 
@@ -78,7 +79,7 @@
         <div style="margin-top:22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
           <a class="link-arrow" href="menu-kitchen.html">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
-            Добавить ещё</a>
+            Добавить ещё блюд</a>
           <button class="link-arrow" id="clear-cart" style="color:var(--ink-3)">Очистить корзину</button>
         </div>
       </div>
@@ -113,10 +114,10 @@
     <div class="empty" id="cart-empty" style="display:none">
       <div class="zh">空</div>
       <h2 class="h3" style="margin-top:8px">В корзине пока пусто</h2>
-      <p class="muted" style="margin-bottom:22px">Загляните в чайную карту или напитки — соберём заказ.</p>
+      <p class="muted" style="margin-bottom:22px">Загляните в чайную карту или на кухню — соберём заказ.</p>
       <div class="hero__cta" style="justify-content:center">
         <a class="btn btn--lg" href="menu-tea.html">Выбрать чай</a>
-        <a class="btn btn--ghost btn--lg" href="menu-kitchen.html">Перейти к напиткам</a>
+        <a class="btn btn--ghost btn--lg" href="menu-kitchen.html">Перейти к кухне</a>
       </div>
     </div>
   </div>
@@ -143,12 +144,12 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a class="brand" href="index.html"><img class="brand__logo" src="assets/logo.svg" alt="КИЦУНЭ — Дом чая" width="46" height="46"><span class="brand__name">КИЦУНЭ<small>ДОМ ЧАЯ · EST 2024</small></span></a>
-        <p style="margin-top:16px;max-width:34ch;font-size:14.5px;color:color-mix(in srgb,var(--paper) 70%, transparent)">Чайный дом и кофейня. Редкий чай прямого привоза, авторские напитки и кофе в Ульяновске.</p>
+        <a class="brand" href="index.html"><img class="brand__logo" src="assets/logo.png" alt="КИЦУНЭ — Дом чая" width="46" height="46"><span class="brand__name">КИЦУНЭ<small>ДОМ ЧАЯ · EST 2024</small></span></a>
+        <p style="margin-top:16px;max-width:34ch;font-size:14.5px;color:color-mix(in srgb,var(--paper) 70%, transparent)">Чайный дом и кафе китайской кухни. Редкий чай прямого привоза, баоцзы, димсамы и WOK в Ульяновске.</p>
         <div class="social"><a href="#">VK</a><a href="#">TG</a><a href="#">OK</a><a href="#">Дзен</a></div>
       </div>
-      <div class="footer-col"><h4>Меню</h4><ul><li><a href="menu-tea.html">Чайная карта</a></li><li><a href="menu-kitchen.html">Кухня</a></li><li><a href="menu-tea.html#drinks">Напитки</a></li><li><a href="menu-kitchen.html#dessert">Десерты</a></li><li><a href="promos.html">Акции</a></li></ul></div>
-      <div class="footer-col"><h4>Гостям</h4><ul><li><a href="reservation.html">Бронирование</a></li><li><a href="delivery.html">Доставка</a></li><li><a href="account.html">Личный кабинет</a></li><li><a href="about.html">О нас</a></li><li><a href="contacts.html">Контакты</a></li></ul></div>
+      <div class="footer-col"><h4>Меню</h4><ul><li><a href="menu-tea.html">Чайная карта</a></li><li><a href="menu-kitchen.html">Кухня · Блюда</a></li><li><a href="shop.html">Чайный магазин</a></li><li><a href="menu-tea.html#drinks">Напитки</a></li><li><a href="menu-kitchen.html#dessert">Десерты</a></li><li><a href="promos.html">Акции</a></li></ul></div>
+      <div class="footer-col"><h4>Гостям</h4><ul><li><a href="reservation.html">Бронирование</a></li><li><a href="delivery.html">Доставка</a></li><li><a href="account.html">Личный кабинет</a></li><li><a href="terms.html">Пользовательское соглашение</a></li><li><a href="about.html">О нас</a></li><li><a href="contacts.html">Контакты</a></li></ul></div>
       <div class="footer-col"><h4>Часы и адрес</h4><p class="footer-hours">Ульяновск, 1-й переулок Мира, 2<br>Ежедневно · 12:00–22:00<br>Чайный клуб · доставка<br><br>★ 4,8 — Яндекс Карты и 2ГИС<br>hello@kitsune.tea</p></div>
     </div>
     <div class="footer-bottom">
@@ -159,8 +160,8 @@
 </footer>
 
 <script src="js/catalog.js"></script>
+<script src="js/shop-catalog.js"></script>
 <script src="js/kitsune.js"></script>
-<script src="js/shop.js"></script>
 <script>
 (function(){
   const filled = document.getElementById('cart-filled');
@@ -223,48 +224,37 @@
   }
   bindOptions('#delivery-opts'); bindOptions('#payment-opts');
 
-  // stepper / remove (delegated) — методы асинхронные, перерисует событие cart:change
+  // stepper / remove (delegated)
   lines.addEventListener('click', e=>{
     const inc=e.target.closest('[data-inc]'), dec=e.target.closest('[data-dec]'), rm=e.target.closest('[data-remove]');
-    if(inc){ const it=KitsuneCart.items().find(i=>i.id===inc.dataset.inc); KitsuneCart.setQty(inc.dataset.inc,(it?it.qty:0)+1); }
-    if(dec){ const it=KitsuneCart.items().find(i=>i.id===dec.dataset.dec); KitsuneCart.setQty(dec.dataset.dec,(it?it.qty:1)-1); }
-    if(rm){ KitsuneCart.remove(rm.dataset.remove); }
+    if(inc){ const it=KitsuneCart.items().find(i=>i.id===inc.dataset.inc); KitsuneCart.setQty(inc.dataset.inc,(it?it.qty:0)+1); render(); }
+    if(dec){ const it=KitsuneCart.items().find(i=>i.id===dec.dataset.dec); KitsuneCart.setQty(dec.dataset.dec,(it?it.qty:1)-1); render(); }
+    if(rm){ KitsuneCart.remove(rm.dataset.remove); render(); }
   });
 
-  document.getElementById('clear-cart').addEventListener('click', ()=>{ KitsuneCart.clear(); });
+  document.getElementById('clear-cart').addEventListener('click', ()=>{ KitsuneCart.clear(); render(); });
 
-  // способ получения (дизайн) -> fulfillment_type (backend)
-  const FULFILLMENT = { delivery:'food_courier', pickup:'dine_in', eatin:'dine_in' };
-
-  // place order -> backend saga (/api/v1/orders)
-  const placeBtn = document.getElementById('place-order');
-  placeBtn.addEventListener('click', async ()=>{
-    if(!KitsuneCart.items().length) return;
+  // place order
+  document.getElementById('place-order').addEventListener('click', ()=>{
+    const items = KitsuneCart.items(); if(!items.length) return;
     const type = document.querySelector('#delivery-opts .is-active')?.dataset.val || 'delivery';
     const pay  = document.querySelector('#payment-opts .is-active')?.dataset.val || 'card';
-    const items = KitsuneCart.items();          // [{id:sku, qty}] — до очистки
-    placeBtn.disabled = true; const orig = placeBtn.textContent; placeBtn.textContent = 'Оформляем…';
-    try{
-      const res = await KitsuneAPI.order({ fulfillment_type: FULFILLMENT[type] || 'food_courier', address: '' });
-      if(!res.ok){ const err = await res.json().catch(()=>({})); throw new Error(err.error || ('HTTP '+res.status)); }
-      const order = await res.json();
-      // сохраняем заказ в историю (для account.html и живого статуса)
-      const rec = { no:'KT-'+order.id.slice(0,8).toUpperCase(), id:order.id, date:new Date().toISOString(),
-        items, total:(order.total_cents||0)/100, type, pay, status:'Готовится' };
-      let hist=[]; try{ hist=JSON.parse(localStorage.getItem('kitsune_orders'))||[]; }catch(e){}
-      hist.unshift(rec); try{ localStorage.setItem('kitsune_orders', JSON.stringify(hist)); }catch(e){}
-      await KitsuneCart.refresh();
-      document.getElementById('order-no').textContent = rec.no;
-      document.getElementById('success').classList.add('is-open');
-    }catch(e){
-      kitsuneToast('Не удалось оформить: ' + e.message);
-    }finally{
-      placeBtn.disabled = false; placeBtn.textContent = orig;
-    }
+    const sub = KitsuneCart.total();
+    const fee = deliveryFee;
+    const no = 'KT-' + String(Math.floor(1000 + Math.random()*9000));
+    const order = {
+      no, date: new Date().toISOString(),
+      items: items.map(i=>({id:i.id, qty:i.qty})),
+      total: sub + fee, type, pay, status:'Готовится'
+    };
+    let orders = []; try{ orders = JSON.parse(localStorage.getItem('kitsune_orders'))||[]; }catch(e){}
+    orders.unshift(order); try{ localStorage.setItem('kitsune_orders', JSON.stringify(orders)); }catch(e){}
+    KitsuneCart.clear();
+    document.getElementById('order-no').textContent = no;
+    document.getElementById('success').classList.add('is-open');
   });
 
-  document.addEventListener('cart:change', render);
-  KitsuneCart.refresh();
+  render();
 })();
 </script>
 </body>
