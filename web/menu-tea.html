@@ -10,29 +10,14 @@
 <meta property="og:site_name" content="КИЦУНЭ — Дом чая">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:title" content="Чайная карта — КИЦУНЭ">
-<meta property="og:description" content="Чайная карта КИЦУНЭ: улуны, пуэры, красный и зелёный чай прямого привоза, а также чайные напитки.">
+<meta property="og:description" content="Улуны, пуэры, красный и зелёный чай прямого привоза, а также чайные напитки.">
 <meta property="og:url" content="https://kitsune.tea/menu-tea.html">
-<meta property="og:image" content="https://kitsune.tea/assets/logo.svg">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Чайная карта — КИЦУНЭ">
-<meta name="twitter:description" content="Чайная карта КИЦУНЭ: улуны, пуэры, красный и зелёный чай прямого привоза, а также чайные напитки.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Lora:wght@500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/kitsune.css">
 </head>
 <body>
-
-<div class="utility">
-  <div class="container">
-    <span class="utility__hours">Ежедневно · 12:00–22:00 &nbsp;|&nbsp; доставка по Ульяновску</span>
-    <div class="utility__right">
-      <a href="delivery.html">Доставка и самовывоз</a>
-      <a href="contacts.html">Ульяновск · 1-й пер. Мира, 2</a>
-      <a href="contacts.html">★ 4,8 · мы на картах</a>
-    </div>
-  </div>
-</div>
 
 <header class="site-header">
   <div class="container nav">
@@ -42,19 +27,23 @@
     </a>
     <nav class="nav__links" aria-label="Основная навигация">
       <a href="menu-tea.html" class="is-active">Чайная карта</a>
-      <a href="menu-kitchen.html">Напитки</a>
+      <a href="menu-kitchen.html">Кухня</a>
+      <a href="shop.html">Магазин</a>
       <a href="promos.html">Акции</a>
       <a href="about.html">О нас</a>
       <a href="contacts.html">Контакты</a>
-          <a href="shop.html">Магазин</a>
     </nav>
     <div class="nav__actions">
       <a class="btn btn--sm" href="reservation.html">Забронировать</a>
-      <a class="icon-btn" href="cart.html" aria-label="Корзина">
+      <a class="icon-btn" href="shop-cart.html" aria-label="Корзина магазина" title="Корзина магазина">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.7 7.6 12 12l8.3-4.4M12 12v9"/></svg>
+        <span class="count count--shop" data-shop-cart-count data-empty="1">0</span>
+      </a>
+      <a class="icon-btn" href="cart.html" aria-label="Корзина кафе" title="Корзина кафе">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h2.2l2.1 12.4a1.6 1.6 0 0 0 1.6 1.3h9a1.6 1.6 0 0 0 1.6-1.3L21 7H6"/></svg>
         <span class="count" data-cart-count data-empty="1">0</span>
       </a>
-      <a class="icon-btn" href="account.html" aria-label="Личный кабинет">
+      <a class="icon-btn" href="account.html" data-account-icon aria-label="Личный кабинет">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
       </a>
       <button class="nav__burger" data-burger aria-label="Открыть меню"><span></span><span></span><span></span></button>
@@ -68,15 +57,16 @@
     <button class="drawer__close" data-drawer-close aria-label="Закрыть">✕</button>
     <a href="index.html">Главная</a>
     <a href="menu-tea.html" class="is-active">Чайная карта</a>
-    <a href="menu-kitchen.html">Напитки</a>
+    <a href="menu-kitchen.html">Кухня · Блюда</a>
+    <a href="shop.html">Чайный магазин</a>
     <a href="promos.html">Акции</a>
     <a href="about.html">О нас · Атмосфера</a>
     <a href="contacts.html">Контакты</a>
     <a href="reservation.html">Бронирование столика</a>
     <a href="delivery.html">Доставка</a>
-    <a href="cart.html">Корзина</a>
+    <a href="cart.html">Корзина кафе</a>
+    <a href="shop-cart.html">Корзина магазина</a>
     <a href="account.html">Личный кабинет</a>
-      <a href="shop.html">Чайный магазин</a>
   </nav>
 </div>
 
@@ -87,7 +77,7 @@
     <div class="section-head" style="margin-bottom:0">
       <div>
         <h1 class="h2 reveal reveal-d1">Чайная карта</h1>
-        <p class="lead reveal reveal-d2" style="margin-top:14px">28 сортов прямого привоза — от бирюзовых улунов до выдержанных пуэров. Каждый берём на развес, к чаю подаём воду нужной температуры.</p>
+        <p class="lead reveal reveal-d2" style="margin-top:14px">Чай прямого привоза — от бирюзовых улунов до выдержанных пуэров. Каждый берём на развес, к чаю подаём воду нужной температуры.</p>
       </div>
       <form class="search reveal reveal-d2" onsubmit="return false">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -96,9 +86,8 @@
     </div>
     <div class="tagrow reveal reveal-d3" style="margin-top:28px" id="filters">
       <button class="chip is-active" data-cat="all">Всё</button>
-      <button class="chip" data-cat="chinese_tea">Китайский</button>
-      <button class="chip" data-cat="author_tea">Авторский</button>
-      <button class="chip" data-cat="boiled_tea">Варёный</button>
+      <button class="chip" data-cat="tea">Чай</button>
+      <button class="chip" data-cat="drinks">Напитки</button>
     </div>
   </div>
 </section>
@@ -106,7 +95,7 @@
 <!-- TEA -->
 <section class="section section--tight menu-sec">
   <div class="container">
-    <h2 class="h3 reveal" style="margin-bottom:24px">Китайский чай</h2>
+    <h2 class="h3 reveal" style="margin-bottom:24px">Чай на развес</h2>
     <div class="grid grid--4" id="tea-grid"></div>
   </div>
 </section>
@@ -130,7 +119,7 @@
 <!-- DRINKS -->
 <section class="section section--tight menu-sec" id="drinks">
   <div class="container">
-    <h2 class="h3 reveal" style="margin-bottom:24px">Авторский и варёный чай</h2>
+    <h2 class="h3 reveal" style="margin-bottom:24px">Чайные напитки</h2>
     <div class="grid grid--4" id="drinks-grid"></div>
   </div>
 </section>
@@ -144,11 +133,11 @@
 <!-- CTA -->
 <section class="section--tight bg-ink">
   <div class="container" style="text-align:center">
-    <span class="eyebrow eyebrow--center reveal" style="color:var(--ochre)">К чаю — напитки</span>
-    <h2 class="h2 reveal reveal-d1" style="color:var(--paper);margin-top:14px">Добавьте кофе или холодный напиток</h2>
+    <span class="eyebrow eyebrow--center reveal" style="color:var(--ochre)">К чаю — кухня</span>
+    <h2 class="h2 reveal reveal-d1" style="color:var(--paper);margin-top:14px">Добавьте баоцзы или димсамы</h2>
     <div class="hero__cta reveal reveal-d2" style="justify-content:center;margin-top:24px">
-      <a class="btn btn--lg" href="menu-kitchen.html">Перейти к напиткам</a>
-      <a class="btn btn--ghost btn--lg" href="cart.html" style="--fg:var(--paper);border-color:rgba(255,255,255,.3)">В корзину</a>
+      <a class="btn btn--lg" href="menu-kitchen.html">Перейти к кухне</a>
+      <a class="btn btn--ghost btn--lg" href="cart.html" style="--fg:var(--paper);border-color:rgba(255,255,255,.3)">В корзину кафе</a>
     </div>
   </div>
 </section>
@@ -158,11 +147,11 @@
     <div class="footer-grid">
       <div class="footer-brand">
         <a class="brand" href="index.html"><img class="brand__logo" src="assets/logo.svg" alt="КИЦУНЭ — Дом чая" width="46" height="46"><span class="brand__name">КИЦУНЭ<small>ДОМ ЧАЯ · EST 2024</small></span></a>
-        <p style="margin-top:16px;max-width:34ch;font-size:14.5px;color:color-mix(in srgb,var(--paper) 70%, transparent)">Чайный дом и кофейня. Редкий чай прямого привоза, авторские напитки и кофе в Ульяновске.</p>
+        <p style="margin-top:16px;max-width:34ch;font-size:14.5px;color:color-mix(in srgb,var(--paper) 70%, transparent)">Чайный дом и кафе китайской кухни. Редкий чай прямого привоза, баоцзы, димсамы и WOK в Ульяновске.</p>
         <div class="social"><a href="#">VK</a><a href="#">TG</a><a href="#">OK</a><a href="#">Дзен</a></div>
       </div>
-      <div class="footer-col"><h4>Меню</h4><ul><li><a href="menu-tea.html">Чайная карта</a></li><li><a href="menu-kitchen.html">Напитки</a></li><li><a href="menu-tea.html#drinks">Напитки</a></li><li><a href="menu-kitchen.html#dessert">Десерты</a></li><li><a href="promos.html">Акции</a></li></ul></div>
-      <div class="footer-col"><h4>Гостям</h4><ul><li><a href="reservation.html">Бронирование</a></li><li><a href="delivery.html">Доставка</a></li><li><a href="account.html">Личный кабинет</a></li><li><a href="about.html">О нас</a></li><li><a href="contacts.html">Контакты</a></li></ul></div>
+      <div class="footer-col"><h4>Меню</h4><ul><li><a href="menu-tea.html">Чайная карта</a></li><li><a href="menu-kitchen.html">Кухня · Блюда</a></li><li><a href="shop.html">Чайный магазин</a></li><li><a href="menu-tea.html#drinks">Напитки</a></li><li><a href="promos.html">Акции</a></li></ul></div>
+      <div class="footer-col"><h4>Гостям</h4><ul><li><a href="reservation.html">Бронирование</a></li><li><a href="delivery.html">Доставка</a></li><li><a href="account.html">Личный кабинет</a></li><li><a href="terms.html">Пользовательское соглашение</a></li><li><a href="about.html">О нас</a></li><li><a href="contacts.html">Контакты</a></li></ul></div>
       <div class="footer-col"><h4>Часы и адрес</h4><p class="footer-hours">Ульяновск, 1-й переулок Мира, 2<br>Ежедневно · 12:00–22:00<br>Чайный клуб · доставка<br><br>★ 4,8 — Яндекс Карты и 2ГИС<br>hello@kitsune.tea</p></div>
     </div>
     <div class="footer-bottom">
@@ -174,10 +163,39 @@
 
 <script src="js/catalog.js"></script>
 <script src="js/kitsune.js"></script>
+<script src="js/shop.js"></script>
 <script>
-  kitsuneRender('#tea-grid', KITSUNE_CATALOG.filter(p => p.cat === 'chinese_tea'));
-  kitsuneRender('#drinks-grid', KITSUNE_CATALOG.filter(p => p.cat === 'author_tea' || p.cat === 'boiled_tea'));
-  kitsuneMenuFilter({ input:'#menu-search', chips:'#filters .chip', cards:'.menu-sec .card', sections:'.menu-sec', empty:'#empty' });
+  /* Чайная карта из БД: карточки рендерятся из /api/v1/menu (не из статики).
+     data-add = sku → KitsuneCart резолвит в UUID и кладёт в реальную корзину кафе. */
+  (async function(){
+    const ZH   = { chinese_tea:'茶', author_tea:'茶', boiled_tea:'煮', coffee:'咖', cold:'冷' };
+    const CATN = { chinese_tea:'Китайский чай', author_tea:'Авторский чай', boiled_tea:'Варёный чай', coffee:'Кофе', cold:'Холодное' };
+    const TEA_CATS = ['chinese_tea'];
+    const DRINK_CATS = ['author_tea','boiled_tea','coffee','cold'];
+
+    const toCard = p => ({
+      id:   p.sku,
+      cat:  TEA_CATS.includes(p.category) ? 'tea' : 'drinks',
+      name: p.name,
+      ph:   p.name,
+      zh:   ZH[p.category] || '茶',
+      meta: p.unit || CATN[p.category] || 'Чай',
+      desc: p.description || '',
+      price: Math.round((p.price_cents||0)/100),
+      unit:  p.unit || '',
+      badge: ''
+    });
+
+    let menu = [];
+    try { menu = await KitsuneAPI.menu(); } catch(e) { menu = []; }
+    const tea    = menu.filter(p => TEA_CATS.includes(p.category)).map(toCard);
+    const drinks = menu.filter(p => DRINK_CATS.includes(p.category)).map(toCard);
+
+    kitsuneRender('#tea-grid', tea);
+    kitsuneRender('#drinks-grid', drinks);
+    kitsuneMenuFilter({ input:'#menu-search', chips:'#filters .chip', cards:'.menu-sec .card', sections:'.menu-sec', empty:'#empty' });
+    if(window.kitsuneShopBadge) kitsuneShopBadge();
+  })();
 </script>
 </body>
 </html>

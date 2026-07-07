@@ -6,29 +6,30 @@
 /* ---------- Tokens ---------- */
 :root{
   /* surfaces — clean warm white to match the logo badge */
-  --paper:        #F8F3EC;   /* page base — soft warm white */
-  --paper-card:   #FFFFFF;   /* card surface — crisp white like the logo */
-  --paper-deep:   #F1E8DB;   /* alt section bg */
-  --oak:          #EADDCB;
-  --line:         #E8DECD;   /* hairlines */
-  --line-soft:    #F0E8DA;
+  --paper:        #F5F1E8;   /* page base — soft warm white */
+  --paper-card:   #FFFFFF;   /* card surface — crisp white */
+  --paper-deep:   #ECEAE0;   /* alt section bg — faint sage-cream */
+  --oak:          #E4E0D2;
+  --line:         #E3DFD1;   /* hairlines */
+  --line-soft:    #EDEADD;
 
-  /* ink — near-black like the logo lettering */
-  --ink:          #1F1A16;   /* graphite/black text */
-  --ink-2:        #4E463D;
-  --ink-3:        #8A8073;   /* muted / captions */
+  /* ink — deep noble green as the dark base */
+  --ink:          #17352A;   /* благородный зелёный (тёмный текст/фон) */
+  --ink-2:        #3C5248;
+  --ink-3:        #7C8A81;   /* muted / captions */
 
-  /* brand — kitsune crimson / raspberry (from the logo) */
-  --clay:         #D23A53;   /* crimson */
-  --clay-600:     #B82F46;
-  --clay-700:     #9A2539;
-  --clay-tint:    #F8DEE3;
-  --ochre:        #C18A3A;
-  --ochre-tint:   #F1E3C8;
-  --sage:         #6F7E54;
-  --sage-600:     #5C6A45;
-  --sage-tint:    #E2E5D4;
-  --gold:         #C2A24E;
+  /* brand — благородный красный (гранат/вино) + благородный зелёный */
+  --clay:         #9E2B37;   /* noble garnet red */
+  --clay-600:     #85222E;
+  --clay-700:     #6C1B26;
+  --clay-tint:    #F1DBDD;
+  --ochre:        #B98A3C;
+  --ochre-tint:   #EFE3C8;
+  --sage:         #235240;   /* noble green */
+  --sage-600:     #1A4130;
+  --sage-tint:    #DCE7E0;
+  --gold:         #B8973F;
+  --green-deep:   #123025;
 
   /* accent (tweakable — defaults to clay) */
   --accent:       var(--clay);
@@ -473,3 +474,77 @@ h1,h2,h3,h4{ font-family:var(--font-head); font-weight:600; line-height:1.08; co
 @media (max-width:420px){
   .grid--3,.grid--4{ grid-template-columns:1fr; }
 }
+
+/* ============================================================
+   Auth modal · Consent bar · account initial · shop cart badge
+   ============================================================ */
+/* account icon shows initial when logged in */
+.icon-btn.is-auth{ background:var(--accent); border-color:var(--accent); color:#fff; }
+.icon-btn.is-auth svg{ display:none; }
+.acct-initial{ font-family:var(--font-head); font-weight:600; font-size:18px; line-height:1; }
+/* distinct badge tint for the shop cart */
+.icon-btn .count--shop{ background:var(--sage); }
+
+/* ---------- Auth modal ---------- */
+.auth{ position:fixed; inset:0; z-index:2147483000; visibility:hidden; }
+.auth.is-open{ visibility:visible; }
+.auth__scrim{ position:absolute; inset:0; background:rgba(18,32,26,.55); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); opacity:0; transition:.3s; }
+.auth.is-open .auth__scrim{ opacity:1; }
+.auth__panel{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-46%); opacity:0;
+  width:min(94vw,440px); max-height:92vh; overflow-y:auto;
+  background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow-lift); padding:30px 30px 24px; transition:.32s cubic-bezier(.2,.8,.3,1);
+}
+.auth.is-open .auth__panel{ transform:translate(-50%,-50%); opacity:1; }
+.auth__x{ position:absolute; top:14px; right:14px; width:36px; height:36px; border-radius:50%; border:1.5px solid var(--line); font-size:16px; color:var(--ink-3); transition:.2s; }
+.auth__x:hover{ border-color:var(--accent); color:var(--accent); }
+.auth__brand{ display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+.auth__tabs{ display:flex; gap:6px; background:var(--paper-deep); border-radius:var(--radius-pill); padding:5px; margin-bottom:22px; }
+.auth__tab{ flex:1; padding:.7em 0; border-radius:var(--radius-pill); font-weight:600; font-size:14.5px; color:var(--ink-3); transition:.2s; }
+.auth__tab.is-active{ background:var(--paper-card); color:var(--ink); box-shadow:var(--shadow-sm); }
+.auth__form{ display:flex; flex-direction:column; gap:14px; }
+.auth__row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.auth__check{ display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink-2); line-height:1.4; cursor:pointer; }
+.auth__check input{ width:16px; height:16px; accent-color:var(--accent); flex:none; }
+.auth__check a{ color:var(--accent); font-weight:600; }
+.auth__note{ font-size:12px; text-align:center; margin-top:16px; }
+
+/* ---------- Consent bar ---------- */
+.consent{ position:fixed; left:16px; right:16px; bottom:16px; z-index:2147483000; transform:translateY(140%); transition:transform .45s cubic-bezier(.2,.8,.3,1); }
+.consent.show{ transform:none; }
+.consent__inner{
+  max-width:var(--container); margin-inline:auto;
+  background:var(--ink); color:color-mix(in srgb,var(--paper) 90%, transparent);
+  border-radius:var(--radius); box-shadow:var(--shadow-lift);
+  padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
+}
+.consent__txt{ display:flex; align-items:center; gap:14px; flex:1; min-width:260px; }
+.consent__seal{ font-family:var(--font-head); font-size:28px; color:var(--paper); opacity:.85; flex:none; }
+.consent__txt p{ font-size:13.5px; line-height:1.5; }
+.consent__txt a{ color:#fff; text-decoration:underline; text-underline-offset:2px; }
+.consent__act{ display:flex; gap:10px; flex:none; }
+.consent .btn--ghost{ --fg:var(--paper); border-color:rgba(255,255,255,.3); }
+.consent .btn--ghost:hover{ background:#fff; --fg:var(--ink); border-color:#fff; }
+@media (max-width:600px){
+  .consent__act{ width:100%; }
+  .consent__act .btn{ flex:1; }
+}
+
+/* ---------- Legal / terms document ---------- */
+.legal{ max-width:820px; margin-inline:auto; }
+.legal h2{ font-size:clamp(22px,2.6vw,28px); margin:38px 0 12px; scroll-margin-top:96px; }
+.legal h3{ font-size:19px; margin:22px 0 8px; }
+.legal p, .legal li{ color:var(--ink-2); font-size:16px; line-height:1.7; }
+.legal p{ margin-bottom:12px; }
+.legal ul{ list-style:none; margin:0 0 14px; padding:0; }
+.legal ul li{ position:relative; padding-left:22px; margin-bottom:8px; }
+.legal ul li::before{ content:""; position:absolute; left:4px; top:11px; width:6px; height:6px; border-radius:50%; background:var(--accent); }
+.legal ol{ margin:0 0 14px 20px; }
+.legal ol li{ margin-bottom:8px; }
+.legal-toc{ background:var(--paper-card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 26px; margin-bottom:34px; }
+.legal-toc h4{ font-family:var(--font-mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-3); margin-bottom:12px; }
+.legal-toc ol{ margin:0; padding-left:20px; columns:2; column-gap:32px; }
+.legal-toc a{ color:var(--ink-2); font-size:14.5px; line-height:1.9; }
+.legal-toc a:hover{ color:var(--accent); }
+@media (max-width:600px){ .legal-toc ol{ columns:1; } }

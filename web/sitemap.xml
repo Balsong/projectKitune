@@ -9,4 +9,5 @@
   <url><loc>https://kitsune.tea/promos.html</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://kitsune.tea/about.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://kitsune.tea/contacts.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://kitsune.tea/terms.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
 </urlset>
